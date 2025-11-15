@@ -1,0 +1,11 @@
+pa_periode_id,periode_name,start_date,end_date
+31,Januari,01 January,31 January
+32,February,01 February,28 February
+42,Tahunan,01 January,31 December
+43,Tahunan Sem-1,01 January,30 June
+35,Kuartal 1,01 January,31 March
+36,Kuartal 2,01 April,30 June
+40,Kuartal 3,01 July,30 September
+41,Kuartal 4,01 October,31 December
+6,Semester 1,01 January,31 July
+28,Semester 2,01 August,31 December

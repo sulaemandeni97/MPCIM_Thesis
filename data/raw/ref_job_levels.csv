@@ -1,0 +1,14 @@
+job_level_id,level_name,group_job_level
+4,Non Staff,0
+166,Non Pangkat,0
+1,Direktur,2
+2,General Manager,2
+3,Manager,2
+5,Senior Manager,2
+6,Officer,1
+165,Direktur Utama,2
+383,Staff,1
+388,Junior Officer,1
+389,Assistent Manager,2
+390,Temporary Position (PJS),2
+391,Komisaris,2

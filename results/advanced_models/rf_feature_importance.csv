@@ -1,0 +1,15 @@
+Feature,Importance
+tenure_years,0.40510085414850794
+tenure_category_encoded,0.32626295804506955
+performance_rating_encoded,0.050803341575921666
+behavior_avg,0.04605597631849583
+performance_score,0.036381064324425956
+combined_score,0.03316962076784545
+marital_status_encoded,0.02719529694357467
+perf_beh_ratio,0.026614586909112316
+score_difference,0.024603328798946014
+behavioral_level_encoded,0.010044262288839747
+performance_level_encoded,0.00840543321531758
+is_permanent_encoded,0.0028160337153146395
+high_performer,0.0025472429486285224
+gender_encoded,0.0

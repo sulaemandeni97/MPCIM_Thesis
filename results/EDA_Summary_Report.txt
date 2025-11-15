@@ -1,0 +1,32 @@
+================================================================================
+MPCIM THESIS - EXPLORATORY DATA ANALYSIS SUMMARY
+================================================================================
+
+Dataset Overview:
+  Total Employees: 712
+  Features: 10
+  Promoted: 66 (9.27%)
+  Not Promoted: 646 (90.73%)
+
+Performance Score:
+  Overall Mean: 81.88
+  Promoted Mean: 88.99
+  Not Promoted Mean: 81.15
+  T-test p-value: 0.0825
+
+Behavioral Score:
+  Overall Mean: 89.72
+  Promoted Mean: 91.85
+  Not Promoted Mean: 89.50
+  T-test p-value: 0.0370
+
+Correlation with Promotion:
+  behavior_avg: 0.078
+  performance_score: 0.065
+  tenure_years: -0.169
+
+Key Findings:
+  1. Behavioral score is SIGNIFICANT for promotion (p=0.037)
+  2. Performance score is NOT significant alone (p=0.083)
+  3. This supports multi-dimensional approach!
+  4. Class imbalance: 9.27% promotion rate (moderate)

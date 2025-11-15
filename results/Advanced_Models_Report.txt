@@ -1,0 +1,51 @@
+================================================================================
+MPCIM THESIS - ADVANCED MODELS SUMMARY
+================================================================================
+
+1. MODELS TRAINED:
+   a) Random Forest Classifier
+   b) XGBoost Classifier
+   c) Neural Network (MLP)
+
+2. COMPLETE RESULTS:
+
+           Model     Type  Accuracy  Precision   Recall  F1-Score  ROC-AUC
+Performance-only Baseline  0.573427   0.157143 0.846154  0.265060 0.723373
+ Behavioral-only Baseline  0.349650   0.107843 0.846154  0.191304 0.653254
+Dual-dimensional Baseline  0.762238   0.243902 0.769231  0.370370 0.811834
+   Random Forest Advanced  0.874126   0.391304 0.692308  0.500000 0.901183
+         XGBoost Advanced  0.895105   0.444444 0.615385  0.516129 0.882840
+  Neural Network Advanced  0.909091   0.500000 0.615385  0.551724 0.882840
+
+3. BEST MODEL BY METRIC:
+   Best Accuracy:  Neural Network (0.9091)
+   Best F1-Score:  Neural Network (0.5517)
+   Best ROC-AUC:   Random Forest (0.9012)
+
+4. IMPROVEMENT OVER BASELINE:
+   Random Forest: +35.00% (F1-Score)
+   XGBoost: +39.35% (F1-Score)
+   Neural Network: +48.97% (F1-Score)
+
+5. TOP 5 FEATURES (Random Forest):
+   tenure_years: 0.4051
+   tenure_category_encoded: 0.3263
+   performance_rating_encoded: 0.0508
+   behavior_avg: 0.0461
+   performance_score: 0.0364
+
+6. TOP 5 FEATURES (XGBoost):
+   tenure_category_encoded: 0.5061
+   tenure_years: 0.1707
+   is_permanent_encoded: 0.0599
+   performance_rating_encoded: 0.0437
+   marital_status_encoded: 0.0309
+
+7. CONCLUSION:
+   🏆 Best Overall Model: Neural Network
+   📊 F1-Score: 0.5517
+   📊 ROC-AUC: 0.8828
+   📊 Accuracy: 0.9091
+
+   ✅ Advanced models OUTPERFORM baseline!
+   ✅ MPCIM framework validated with state-of-the-art algorithms!

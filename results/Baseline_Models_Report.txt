@@ -1,0 +1,44 @@
+================================================================================
+MPCIM THESIS - BASELINE MODELS SUMMARY
+================================================================================
+
+1. MODELS TRAINED:
+   a) Performance-only (Single Dimension)
+      Features: 3
+   b) Behavioral-only (Single Dimension)
+      Features: 2
+   c) Dual-dimensional (MPCIM Approach)
+      Features: 14
+
+2. DATASET:
+   Training: 1032 samples (balanced with SMOTE)
+   Test: 143 samples (original distribution)
+
+3. RESULTS COMPARISON:
+
+           Model  Accuracy  Precision   Recall  F1-Score  ROC-AUC
+Performance-only  0.573427   0.157143 0.846154  0.265060 0.723373
+ Behavioral-only  0.349650   0.107843 0.846154  0.191304 0.653254
+Dual-dimensional  0.762238   0.243902 0.769231  0.370370 0.811834
+
+4. KEY FINDINGS:
+   Best Accuracy:  Dual-dimensional
+   Best Precision: Dual-dimensional
+   Best Recall:    Performance-only
+   Best F1-Score:  Dual-dimensional
+   Best ROC-AUC:   Dual-dimensional
+
+5. IMPROVEMENT ANALYSIS:
+   Dual vs Performance-only: 32.93%
+   Dual vs Behavioral-only:  118.00%
+
+6. TOP 5 IMPORTANT FEATURES (Dual Model):
+   tenure_years: -5.4854
+   tenure_category_encoded: 2.6789
+   behavior_avg: 0.6245
+   perf_beh_ratio: 0.6040
+   score_difference: -0.3060
+
+7. CONCLUSION:
+   ✅ Dual-dimensional approach OUTPERFORMS single-dimension models!
+   ✅ This validates the MPCIM framework hypothesis.
