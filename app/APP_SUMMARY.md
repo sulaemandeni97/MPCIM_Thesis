@@ -1,7 +1,7 @@
 # 🎉 MPCIM Dashboard - Application Summary
 
 **Created**: October 22, 2025  
-**Author**: Denis Ulaeman  
+**Author**: Deni Sulaeman
 **Status**: ✅ Ready to Use
 
 ---

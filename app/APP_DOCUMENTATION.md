@@ -585,4 +585,4 @@ For issues or questions:
 
 **Last Updated**: October 22, 2025  
 **Version**: 1.0.0  
-**Author**: Denis Ulaeman
+**Author**: Deni Sulaeman

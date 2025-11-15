@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # MPCIM Dashboard Startup Script
-# Author: Denis Ulaeman
+# Author: Deni Sulaeman
 
 echo "=========================================="
 echo "MPCIM Dashboard - Starting Application"

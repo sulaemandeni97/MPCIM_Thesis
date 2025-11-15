@@ -101,7 +101,7 @@ def create_advanced_proposal():
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.add_run('Prepared by:\n\n').font.size = Pt(12)
-    r = p.add_run('Denis Ulaeman\n')
+    r = p.add_run('Deni Sulaeman\n')
     r.font.size = Pt(14)
     r.font.bold = True
     p.add_run('[Student ID]\n\n\n').font.size = Pt(12)

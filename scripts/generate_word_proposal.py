@@ -46,7 +46,7 @@ doc.add_paragraph('\n' * 3)
 author = doc.add_paragraph()
 author.alignment = WD_ALIGN_PARAGRAPH.CENTER
 author.add_run('By\n\n').font.size = Pt(12)
-author_name = author.add_run('Denis Ulaeman\n\n')
+author_name = author.add_run('Deni Sulaeman\n\n')
 author_name.font.size = Pt(14)
 author_name.font.bold = True
 

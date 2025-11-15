@@ -1,7 +1,7 @@
 # THESIS PROPOSAL - COMPLETE PACKAGE
 
 **Created**: October 21, 2025  
-**Author**: Denis Ulaeman  
+**Author**: Deni Sulaeman  
 **Status**: Professional proposal ready for submission
 
 ---
