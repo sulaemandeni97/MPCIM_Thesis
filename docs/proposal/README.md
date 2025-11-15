@@ -2,7 +2,7 @@
 
 ## Dual-Dimensional Predictive Analytics for Career Progression
 
-**Author**: Denis Ulaeman  
+**Author**: Deni Sulaeman 
 **Date**: October 21, 2025  
 **Status**: 60% Complete
 

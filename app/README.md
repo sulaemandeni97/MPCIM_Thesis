@@ -207,7 +207,7 @@ pip install -r requirements.txt --upgrade
 
 ## 👨‍💻 Author
 
-**Denis Ulaeman**  
+**Deni Sulaeman**  
 Master Program in Information Systems  
 MPCIM Thesis Research
 

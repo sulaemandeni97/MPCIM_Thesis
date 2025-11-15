@@ -1,6 +1,6 @@
 """
 MPCIM Thesis - Advanced Model Development
-Author: Denis Ulaeman
+Author: Deni Sulaeman
 Date: October 21, 2025
 
 This script develops advanced models:

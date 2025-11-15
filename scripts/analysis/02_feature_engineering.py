@@ -1,6 +1,6 @@
 """
 MPCIM Thesis - Feature Engineering
-Author: Denis Ulaeman
+Author: Deni Sulaeman
 Date: October 21, 2025
 
 This script performs comprehensive feature engineering including:

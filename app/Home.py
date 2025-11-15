@@ -2,7 +2,7 @@
 MPCIM Thesis - Interactive Dashboard
 Multi-Dimensional Performance-Career Integration Model
 
-Author: Denis Ulaeman
+Author: Deni Sulaeman
 Date: October 22, 2025
 """
 
@@ -69,7 +69,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 👨‍🎓 About")
     st.markdown("""
-    **Author**: Denis Ulaeman  
+    **Author**: Deni Sulaeman  
     **Program**: Master in Information Systems  
     **Topic**: Predictive Analytics for Career Progression
     """)
@@ -204,6 +204,6 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #888; padding: 2rem 0;'>
     <p><strong>MPCIM Thesis Dashboard</strong> | Master Program in Information Systems</p>
-    <p>© 2025 Denis Ulaeman | Built with Streamlit 🎈</p>
+    <p>© 2025 Deni Sulaeman | Built with Streamlit 🎈</p>
 </div>
 """, unsafe_allow_html=True)
