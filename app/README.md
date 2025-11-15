@@ -1,3 +1,26 @@
+# MPCIM Dashboard (app)
+
+This folder contains the Streamlit dashboard for the MPCIM thesis project.
+
+Quick start (local):
+
+1. Create and activate Python 3.11 environment (recommended via conda/miniforge):
+
+```bash
+conda create -n mpcim python=3.11 -y
+conda activate mpcim
+pip install -r app/requirements-streamlit.txt
+```
+
+2. Run the app:
+
+```bash
+streamlit run app/Home.py
+```
+
+Notes:
+- If you deploy to Streamlit Cloud, set the branch `enhance/ui-downloads` (or `main`) and optionally set the environment variable `DATA_URL` to point to a CSV file if you don't include data in repo.
+- A small sample dataset and EDA summary are included in `data/final/integrated_performance_behavioral_sample.csv` and `results/EDA_Summary_Report.txt` for preview.
 # MPCIM Dashboard - Interactive Web Application
 
 ## 📊 Overview

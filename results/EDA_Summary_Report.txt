@@ -1,3 +1,19 @@
+EDA Summary Report (sample)
+==========================
+
+Dataset: integrated_performance_behavioral_sample.csv
+
+Rows: 10
+Columns: 8
+
+Promotion rate: 30.00% (3 promoted / 10 total)
+
+Performance score: mean=80.2, std=8.9
+Behavioral score: mean=83.5, std=8.6
+
+Notes:
+- This is a small sample dataset included for demonstration purposes.
+- For full analysis, run: scripts/analysis/01_exploratory_data_analysis.py
 ================================================================================
 MPCIM THESIS - EXPLORATORY DATA ANALYSIS SUMMARY
 ================================================================================

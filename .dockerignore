@@ -1,0 +1,14 @@
+.venv
+venv
+__pycache__
+.pytest_cache
+.git
+data/raw
+data/processed
+*.pyc
+*.pyo
+*.pyd
+env/
+build/
+dist/
+/.vscode
