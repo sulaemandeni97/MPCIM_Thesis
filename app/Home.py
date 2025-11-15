@@ -6,12 +6,21 @@ Author: Deni Sulaeman
 Date: October 22, 2025
 """
 
+import os
+import io
+import urllib.request
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
+
+# caching helper for data
+@st.cache_data(ttl=60 * 60)
+def load_csv_from_path(path_or_buffer):
+    return pd.read_csv(path_or_buffer)
 
 # Page configuration
 st.set_page_config(
@@ -108,32 +117,80 @@ with col1:
 with col2:
     st.markdown("### 📊 Quick Stats")
     
-    # Try to load data for quick stats
-    data_path = Path("/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/data/final/integrated_performance_behavioral.csv")
-    
-    if data_path.exists():
-        df = pd.read_csv(data_path)
-        
+    # Robust data loading: prefer repository relative path, else DATA_URL env var
+    repo_root = Path(__file__).resolve().parents[1]
+    default_data = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
+    data_url = os.environ.get("DATA_URL")  # allow deploy to point to an external CSV
+
+    df = None
+    data_load_error = None
+
+    try:
+        if default_data.exists():
+            df = load_csv_from_path(default_data)
+        elif data_url:
+            st.info("Mengunduh data dari DATA_URL environment variable...")
+            # stream download into BytesIO to avoid writing to disk
+            with urllib.request.urlopen(data_url) as resp:
+                raw = resp.read()
+            df = load_csv_from_path(io.BytesIO(raw))
+        else:
+            data_load_error = (
+                "Data tidak ditemukan. Tambahkan file CSV di: 'data/final/integrated_performance_behavioral.csv' "
+                "atau set environment variable DATA_URL ke URL file CSV."
+            )
+    except Exception as e:
+        data_load_error = f"Gagal memuat data: {e}"
+
+    if df is not None:
         st.metric("Total Employees", f"{len(df):,}")
-        st.metric("Promotion Rate", f"{df['has_promotion'].mean()*100:.2f}%")
+        if 'has_promotion' in df.columns:
+            st.metric("Promotion Rate", f"{df['has_promotion'].mean()*100:.2f}%")
+        else:
+            st.metric("Promotion Rate", "N/A")
         st.metric("Features", len(df.columns))
-        
+
         # Promotion distribution
-        promo_counts = df['has_promotion'].value_counts()
-        fig = go.Figure(data=[go.Pie(
-            labels=['Not Promoted', 'Promoted'],
-            values=promo_counts.values,
-            hole=0.4,
-            marker_colors=['#e74c3c', '#2ecc71']
-        )])
-        fig.update_layout(
-            title="Promotion Distribution",
-            height=300,
-            showlegend=True
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        if 'has_promotion' in df.columns:
+            promo_counts = df['has_promotion'].value_counts()
+            fig = go.Figure(data=[go.Pie(
+                labels=['Not Promoted', 'Promoted'],
+                values=promo_counts.values,
+                hole=0.4,
+                marker_colors=['#e74c3c', '#2ecc71']
+            )])
+            fig.update_layout(
+                title="Promotion Distribution",
+                height=300,
+                showlegend=True
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        # Download buttons: dataset CSV and EDA report (if exists)
+        with st.expander("🔽 Download & Export"):
+            csv_bytes = df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Download dataset (CSV)",
+                data=csv_bytes,
+                file_name="integrated_performance_behavioral.csv",
+                mime="text/csv"
+            )
+
+            # EDA summary file (optional)
+            eda_summary = repo_root / "results" / "EDA_Summary_Report.txt"
+            if eda_summary.exists():
+                with open(eda_summary, "rb") as f:
+                    st.download_button(
+                        label="Download EDA Summary",
+                        data=f,
+                        file_name="EDA_Summary_Report.txt",
+                        mime="text/plain"
+                    )
+            else:
+                st.info("Tidak ditemukan EDA_Summary_Report.txt di folder results/. Jalankan skrip EDA untuk membuatnya.")
+
     else:
-        st.warning("⚠️ Data belum tersedia. Silakan upload data terlebih dahulu.")
+        st.warning(f"⚠️ {data_load_error}")
 
 # Key Features
 st.markdown("---")

@@ -3,6 +3,10 @@ Data Explorer Page
 Interactive data exploration and filtering
 """
 
+import os
+import io
+import joblib
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -15,19 +19,53 @@ st.set_page_config(page_title="Data Explorer", page_icon="📊", layout="wide")
 st.title("📊 Data Explorer")
 st.markdown("Eksplorasi dan analisis dataset MPCIM")
 
-# Load data
-@st.cache_data
-def load_data():
-    data_path = Path("/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/data/final/integrated_performance_behavioral.csv")
-    if data_path.exists():
-        return pd.read_csv(data_path)
+
+# Robust data loader with uploader and sample fallback
+@st.cache_data(ttl=60 * 60)
+def load_data(uploaded_file=None):
+    repo_root = Path(__file__).resolve().parents[2]
+    default_path = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
+    sample_path = repo_root / "data" / "final" / "integrated_performance_behavioral_sample.csv"
+
+    if uploaded_file is not None:
+        try:
+            return pd.read_csv(uploaded_file)
+        except Exception:
+            return None
+
+    if default_path.exists():
+        return pd.read_csv(default_path)
+
+    if sample_path.exists():
+        return pd.read_csv(sample_path)
+
+    # Try DATA_URL env var
+    data_url = os.environ.get("DATA_URL")
+    if data_url:
+        try:
+            import urllib.request
+            with urllib.request.urlopen(data_url) as resp:
+                raw = resp.read()
+            return pd.read_csv(io.BytesIO(raw))
+        except Exception:
+            return None
+
     return None
 
-df = load_data()
+
+uploaded = st.sidebar.file_uploader("Upload CSV dataset (optional)", type=["csv"])
+df = load_data(uploaded_file=uploaded)
 
 if df is None:
-    st.error("❌ Data tidak ditemukan. Pastikan file CSV tersedia di lokasi yang benar.")
+    st.error("❌ Data tidak ditemukan atau gagal dimuat. Upload CSV atau tambahkan data ke folder data/final/ atau set DATA_URL.")
     st.stop()
+
+# Normalize column names (common variations)
+col_map = {}
+if 'behavior_avg' not in df.columns and 'behavioral_score' in df.columns:
+    df['behavior_avg'] = df['behavioral_score']
+if 'performance_score' not in df.columns and 'performance' in df.columns:
+    df['performance_score'] = df['performance']
 
 # Sidebar filters
 st.sidebar.markdown("### 🔍 Filters")
@@ -116,6 +154,27 @@ with col4:
         avg_beh = filtered_df['behavior_avg'].mean()
         st.metric("Avg Behavioral", f"{avg_beh:.2f}")
 
+# Model utilities: try import xgboost, fallback to sklearn
+try:
+    import xgboost as xgb
+    xgb_available = True
+except Exception:
+    xgb_available = False
+
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, roc_auc_score
+
+models_dir = Path(__file__).resolve().parents[2] / "models"
+models_dir.mkdir(parents=True, exist_ok=True)
+
+@st.cache_resource
+def load_model(path):
+    try:
+        return joblib.load(path)
+    except Exception:
+        return None
+
 # Tabs
 tab1, tab2, tab3, tab4 = st.tabs(["📋 Data Table", "📊 Statistics", "📈 Distributions", "🔗 Relationships"])
 
@@ -142,6 +201,49 @@ with tab1:
         file_name="mpcim_filtered_data.csv",
         mime="text/csv"
     )
+
+    # Model actions: train or load
+    st.markdown("---")
+    st.markdown("### 🤖 Model Actions")
+    model_path = models_dir / "xgb_or_sklearn_model.joblib"
+    existing_model = load_model(model_path) if model_path.exists() else None
+
+    if existing_model is not None:
+        st.success("Model ditemukan: tersedia untuk download dan evaluasi.")
+        with open(model_path, "rb") as mfile:
+            st.download_button("📥 Download Trained Model", data=mfile, file_name=model_path.name)
+    else:
+        st.info("Belum ada model tersimpan. Anda bisa melatih model cepat di sini (XGBoost jika tersedia, lainnya sklearn).")
+        if st.button("Train quick model (default features)"):
+            # prepare data
+            features = [c for c in ['performance_score', 'behavior_avg', 'tenure_years'] if c in filtered_df.columns]
+            if 'has_promotion' not in filtered_df.columns or len(features) == 0:
+                st.error("Tidak ada target 'has_promotion' atau fitur yang cukup untuk melatih model.")
+            else:
+                X = filtered_df[features].dropna()
+                y = filtered_df.loc[X.index, 'has_promotion']
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+                if xgb_available:
+                    st.write("Melatih XGBoostClassifier...")
+                    clf = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss', n_estimators=50, max_depth=3)
+                else:
+                    st.write("XGBoost tidak tersedia — fallback ke sklearn.GradientBoostingClassifier")
+                    clf = GradientBoostingClassifier(n_estimators=50, max_depth=3)
+
+                clf.fit(X_train, y_train)
+                preds = clf.predict(X_test)
+                acc = accuracy_score(y_test, preds)
+                try:
+                    proba = clf.predict_proba(X_test)[:, 1]
+                    auc = roc_auc_score(y_test, proba)
+                except Exception:
+                    auc = None
+
+                joblib.dump(clf, model_path)
+                st.success(f"Training selesai — Accuracy: {acc:.3f}" + (f", AUC: {auc:.3f}" if auc is not None else ""))
+                with open(model_path, "rb") as mfile:
+                    st.download_button("📥 Download Trained Model", data=mfile, file_name=model_path.name)
 
 with tab2:
     st.markdown("### 📊 Descriptive Statistics")
