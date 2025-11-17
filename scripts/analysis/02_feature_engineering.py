@@ -11,6 +11,9 @@ This script performs comprehensive feature engineering including:
 - Train/test split
 """
 
+import os
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,9 +28,10 @@ warnings.filterwarnings('ignore')
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (12, 8)
 
-# Create output directory
-import os
-output_dir = '/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/results/feature_engineering'
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = REPO_ROOT / "data"
+RESULTS_DIR = REPO_ROOT / "results"
+output_dir = RESULTS_DIR / 'feature_engineering'
 os.makedirs(output_dir, exist_ok=True)
 
 print('='*80)
@@ -42,7 +46,7 @@ print()
 print('1. LOADING DATA')
 print('-'*80)
 
-data_path = '/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/data/final/integrated_performance_behavioral.csv'
+data_path = DATA_DIR / 'final' / 'integrated_full_dataset.csv'
 df = pd.read_csv(data_path)
 
 print(f'✅ Data loaded: {df.shape}')
@@ -181,6 +185,19 @@ df_clean['high_performer'] = ((df_clean['performance_level'] == 'high') &
                                (df_clean['behavioral_level'] == 'high')).astype(int)
 print(f'✅ Created: high_performer (both dimensions high)')
 
+# 3.8 Psychological Features (from Quick Assessment)
+# These are already in the dataset from integration script
+if 'psychological_score' in df_clean.columns:
+    print(f'✅ Using: psychological_score (from Quick Assessment)')
+    print(f'✅ Using: drive_score (from Quick Assessment)')
+    print(f'✅ Using: mental_strength_score (from Quick Assessment)')
+    print(f'✅ Using: adaptability_score (from Quick Assessment)')
+    print(f'✅ Using: collaboration_score (from Quick Assessment)')
+    print(f'✅ Using: has_quick_assessment (indicator)')
+    print(f'✅ Using: holistic_score (combined metric)')
+    print(f'✅ Using: score_alignment (consistency)')
+    print(f'✅ Using: leadership_potential (leadership indicator)')
+
 print()
 print(f'Total features now: {len(df_clean.columns)}')
 print()
@@ -242,6 +259,21 @@ feature_cols = [
 # Check if performance_rating_encoded exists
 if 'performance_rating_encoded' in df_encoded.columns:
     feature_cols.append('performance_rating_encoded')
+
+# Add Quick Assessment features if available
+if 'psychological_score' in df_encoded.columns:
+    feature_cols.extend([
+        'psychological_score',
+        'drive_score',
+        'mental_strength_score',
+        'adaptability_score',
+        'collaboration_score',
+        'has_quick_assessment',
+        'holistic_score',
+        'score_alignment',
+        'leadership_potential'
+    ])
+    print(f'✅ Added 9 Quick Assessment features')
 
 X = df_encoded[feature_cols].copy()
 y = df_encoded['has_promotion'].copy()
@@ -403,30 +435,30 @@ print('9. SAVING PROCESSED DATA')
 print('-'*80)
 
 # Save processed datasets
-processed_dir = '/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/data/processed'
+processed_dir = DATA_DIR / 'processed'
 os.makedirs(processed_dir, exist_ok=True)
 
 # Save full processed dataset
-df_encoded.to_csv(f'{processed_dir}/full_dataset_processed.csv', index=False)
+df_encoded.to_csv(processed_dir / 'full_dataset_processed.csv', index=False)
 print(f'✅ Saved: full_dataset_processed.csv')
 
 # Save train/test splits
-X_train.to_csv(f'{processed_dir}/X_train.csv', index=False)
-X_test.to_csv(f'{processed_dir}/X_test.csv', index=False)
-y_train.to_csv(f'{processed_dir}/y_train.csv', index=False)
-y_test.to_csv(f'{processed_dir}/y_test.csv', index=False)
+X_train.to_csv(processed_dir / 'X_train.csv', index=False)
+X_test.to_csv(processed_dir / 'X_test.csv', index=False)
+y_train.to_csv(processed_dir / 'y_train.csv', index=False)
+y_test.to_csv(processed_dir / 'y_test.csv', index=False)
 print(f'✅ Saved: X_train.csv, X_test.csv, y_train.csv, y_test.csv')
 
 # Save balanced training set
 X_train_balanced_df = pd.DataFrame(X_train_balanced, columns=X_train.columns)
 y_train_balanced_df = pd.DataFrame(y_train_balanced, columns=['has_promotion'])
-X_train_balanced_df.to_csv(f'{processed_dir}/X_train_balanced.csv', index=False)
-y_train_balanced_df.to_csv(f'{processed_dir}/y_train_balanced.csv', index=False)
+X_train_balanced_df.to_csv(processed_dir / 'X_train_balanced.csv', index=False)
+y_train_balanced_df.to_csv(processed_dir / 'y_train_balanced.csv', index=False)
 print(f'✅ Saved: X_train_balanced.csv, y_train_balanced.csv')
 
 # Save scaler
 import joblib
-joblib.dump(scaler, f'{processed_dir}/scaler.pkl')
+joblib.dump(scaler, processed_dir / 'scaler.pkl')
 print(f'✅ Saved: scaler.pkl')
 
 print()
@@ -472,7 +504,7 @@ print()
 print('11. GENERATING SUMMARY REPORT')
 print('-'*80)
 
-report_path = '/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/results/Feature_Engineering_Report.txt'
+report_path = RESULTS_DIR / 'Feature_Engineering_Report.txt'
 
 with open(report_path, 'w') as f:
     f.write('='*80 + '\n')

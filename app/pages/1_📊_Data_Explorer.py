@@ -13,26 +13,125 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ui import apply_styles, page_header
 
 st.set_page_config(page_title="Data Explorer", page_icon="📊", layout="wide")
 
-st.title("📊 Data Explorer")
-st.markdown("Eksplorasi dan analisis dataset MPCIM")
+apply_styles()
 
+# Enhanced header
+st.markdown("""
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            padding: 25px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
+    <h1 style="color: white; margin: 0; font-size: 2.2em;">📊 Data Explorer</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 1.1em;">
+        Eksplorasi dan Analisis Dataset MPCIM
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+
+# Required columns for validation
+REQUIRED_COLUMNS = [
+    'employee_id_hash', 'company_id', 'tenure_years', 'gender', 'marital_status', 
+    'is_permanent', 'performance_score', 'performance_rating', 'has_promotion', 
+    'behavior_avg', 'psychological_score', 'drive_score', 'mental_strength_score', 
+    'adaptability_score', 'collaboration_score', 'has_quick_assessment', 
+    'holistic_score', 'score_alignment', 'leadership_potential'
+]
+
+def validate_dataset(df):
+    """Validate uploaded dataset structure and content."""
+    errors = []
+    warnings = []
+    
+    # Check required columns
+    missing_cols = set(REQUIRED_COLUMNS) - set(df.columns)
+    if missing_cols:
+        errors.append(f"Missing required columns: {', '.join(missing_cols)}")
+    
+    # Check for duplicate employee IDs
+    if 'employee_id_hash' in df.columns:
+        duplicates = df['employee_id_hash'].duplicated().sum()
+        if duplicates > 0:
+            errors.append(f"Found {duplicates} duplicate employee IDs")
+    
+    # Check data types and ranges
+    if 'performance_score' in df.columns:
+        if df['performance_score'].min() < 0 or df['performance_score'].max() > 100:
+            warnings.append("Performance scores outside 0-100 range")
+    
+    if 'behavior_avg' in df.columns:
+        if df['behavior_avg'].min() < 0 or df['behavior_avg'].max() > 100:
+            warnings.append("Behavioral scores outside 0-100 range")
+    
+    if 'psychological_score' in df.columns:
+        if df['psychological_score'].min() < 0 or df['psychological_score'].max() > 100:
+            warnings.append("Psychological scores outside 0-100 range")
+    
+    if 'has_promotion' in df.columns:
+        if not df['has_promotion'].isin([0, 1]).all():
+            errors.append("has_promotion must be 0 or 1")
+    
+    if 'has_quick_assessment' in df.columns:
+        if not df['has_quick_assessment'].isin([0, 1]).all():
+            errors.append("has_quick_assessment must be 0 or 1")
+    
+    # Check for missing values in critical columns
+    critical_cols = ['employee_id_hash', 'performance_score', 'behavior_avg', 'has_promotion']
+    for col in critical_cols:
+        if col in df.columns and df[col].isna().any():
+            errors.append(f"Missing values found in critical column: {col}")
+    
+    return errors, warnings
 
 # Robust data loader with uploader and sample fallback
 @st.cache_data(ttl=60 * 60)
 def load_data(uploaded_file=None):
     repo_root = Path(__file__).resolve().parents[2]
+    # Try integrated_full_dataset first (with QA), fallback to old dataset
+    default_path_qa = repo_root / "data" / "final" / "integrated_full_dataset.csv"
     default_path = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
     sample_path = repo_root / "data" / "final" / "integrated_performance_behavioral_sample.csv"
+    sample_100_path = repo_root / "data" / "final" / "sample_dataset_100.csv"
 
     if uploaded_file is not None:
         try:
-            return pd.read_csv(uploaded_file)
-        except Exception:
+            df = pd.read_csv(uploaded_file)
+            errors, warnings = validate_dataset(df)
+            
+            if errors:
+                st.error("❌ Dataset validation failed:")
+                for error in errors:
+                    st.error(f"  • {error}")
+                st.info("💡 Please check DATASET_UPLOAD_GUIDE.md for proper format")
+                return None
+            
+            if warnings:
+                st.warning("⚠️ Dataset warnings:")
+                for warning in warnings:
+                    st.warning(f"  • {warning}")
+            
+            st.success("✅ Dataset validated successfully!")
+            return df
+        except Exception as e:
+            st.error(f"❌ Error reading CSV: {str(e)}")
             return None
 
+    # Try balanced sample first for quick demo (70% promoted, 30% not promoted)
+    sample_100_balanced_path = repo_root / "data" / "final" / "sample_dataset_100_balanced.csv"
+    if sample_100_balanced_path.exists():
+        return pd.read_csv(sample_100_balanced_path)
+    
+    # Fallback to original sample
+    if sample_100_path.exists():
+        return pd.read_csv(sample_100_path)
+    
+    if default_path_qa.exists():
+        return pd.read_csv(default_path_qa)
+    
     if default_path.exists():
         return pd.read_csv(default_path)
 
@@ -53,12 +152,78 @@ def load_data(uploaded_file=None):
     return None
 
 
-uploaded = st.sidebar.file_uploader("Upload CSV dataset (optional)", type=["csv"])
-df = load_data(uploaded_file=uploaded)
+data_state = st.session_state.setdefault('data_explorer_state', {})
+
+# Dataset info section
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📊 Dataset Options")
+
+with st.sidebar.expander("ℹ️ Available Datasets", expanded=False):
+    st.markdown("""
+    **Sample Datasets:**
+    - `sample_dataset_100_balanced.csv` ⭐ **DEFAULT**
+      - 100 rows (70% promoted, 30% not)
+      - QA scores in 0-100 range
+      - Perfect for demos!
+    - `sample_dataset_100.csv` (100 rows, 10% promoted)
+    - `integrated_full_dataset.csv` (712 rows, 9.3% promoted)
+    
+    **Template:**
+    - `UPLOAD_TEMPLATE.csv` (structure reference)
+    
+    **Guide:**
+    - See `DATASET_UPLOAD_GUIDE.md` for details
+    
+    **Required Columns:** 19 columns
+    - Basic Info (6)
+    - Performance (3)
+    - Behavioral (1)
+    - Quick Assessment (9)
+    """)
+
+uploaded = st.sidebar.file_uploader("Upload CSV dataset (optional)", type=["csv"], key="data_explorer_upload")
+
+if data_state.get("source") == "uploaded":
+    st.sidebar.success(f"📂 Menggunakan data upload: {data_state.get('uploaded_name', 'custom_upload')}")
+    if st.sidebar.button("Reset ke data default", key="reset_uploaded_dataset"):
+        data_state.clear()
+        st.experimental_rerun()
+else:
+    st.sidebar.info("📂 Menggunakan data default: sample_dataset_100_balanced.csv (70% promoted)")
+
+df = None
+
+if uploaded is not None:
+    df = load_data(uploaded_file=uploaded)
+    if df is not None:
+        try:
+            uploaded_bytes = uploaded.getvalue()
+        except AttributeError:
+            uploaded.seek(0)
+            uploaded_bytes = uploaded.read()
+        data_state["uploaded_bytes"] = uploaded_bytes
+        data_state["uploaded_name"] = uploaded.name
+        data_state["source"] = "uploaded"
+elif data_state.get("source") == "uploaded" and data_state.get("uploaded_bytes"):
+    try:
+        df = pd.read_csv(io.BytesIO(data_state["uploaded_bytes"]))
+    except Exception:
+        data_state.clear()
+
+if df is None:
+    df = load_data()
+    data_state.setdefault("source", "default")
 
 if df is None:
     st.error("❌ Data tidak ditemukan atau gagal dimuat. Upload CSV atau tambahkan data ke folder data/final/ atau set DATA_URL.")
     st.stop()
+
+# Store loaded dataset in session_state so other pages (EDA, Model) can reuse it
+try:
+    st.session_state['mpcim_df'] = df
+except Exception:
+    # session_state may not be available in very old Streamlit versions; ignore silently
+    pass
 
 # Normalize column names (common variations)
 col_map = {}
@@ -112,6 +277,52 @@ if 'behavior_avg' in df.columns:
 else:
     beh_range = None
 
+# Quick Assessment filters
+has_qa_data = 'psychological_score' in df.columns
+
+if has_qa_data:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🧠 Quick Assessment Filters")
+    
+    # QA data availability filter
+    if 'has_quick_assessment' in df.columns:
+        qa_filter = st.sidebar.multiselect(
+            "QA Data Availability",
+            options=[0, 1],
+            default=[0, 1],
+            format_func=lambda x: "Has QA Data" if x == 1 else "No QA Data"
+        )
+    else:
+        qa_filter = None
+    
+    # Psychological score range
+    if 'psychological_score' in df.columns:
+        psych_min, psych_max = float(df['psychological_score'].min()), float(df['psychological_score'].max())
+        psych_range = st.sidebar.slider(
+            "Psychological Score Range",
+            min_value=psych_min,
+            max_value=psych_max,
+            value=(psych_min, psych_max)
+        )
+    else:
+        psych_range = None
+    
+    # Leadership potential range
+    if 'leadership_potential' in df.columns:
+        lead_min, lead_max = float(df['leadership_potential'].min()), float(df['leadership_potential'].max())
+        lead_range = st.sidebar.slider(
+            "Leadership Potential Range",
+            min_value=lead_min,
+            max_value=lead_max,
+            value=(lead_min, lead_max)
+        )
+    else:
+        lead_range = None
+else:
+    qa_filter = None
+    psych_range = None
+    lead_range = None
+
 # Apply filters
 filtered_df = df.copy()
 filtered_df = filtered_df[filtered_df['has_promotion'].isin(promotion_filter)]
@@ -129,6 +340,22 @@ if beh_range is not None:
     filtered_df = filtered_df[
         (filtered_df['behavior_avg'] >= beh_range[0]) &
         (filtered_df['behavior_avg'] <= beh_range[1])
+    ]
+
+# Apply QA filters
+if qa_filter is not None:
+    filtered_df = filtered_df[filtered_df['has_quick_assessment'].isin(qa_filter)]
+
+if psych_range is not None:
+    filtered_df = filtered_df[
+        (filtered_df['psychological_score'] >= psych_range[0]) &
+        (filtered_df['psychological_score'] <= psych_range[1])
+    ]
+
+if lead_range is not None:
+    filtered_df = filtered_df[
+        (filtered_df['leadership_potential'] >= lead_range[0]) &
+        (filtered_df['leadership_potential'] <= lead_range[1])
     ]
 
 # Display metrics
@@ -153,6 +380,31 @@ with col4:
     if 'behavior_avg' in filtered_df.columns:
         avg_beh = filtered_df['behavior_avg'].mean()
         st.metric("Avg Behavioral", f"{avg_beh:.2f}")
+
+# Additional QA metrics if available
+if has_qa_data:
+    st.markdown("#### 🧠 Quick Assessment Metrics")
+    qa_col1, qa_col2, qa_col3, qa_col4 = st.columns(4)
+    
+    with qa_col1:
+        if 'psychological_score' in filtered_df.columns:
+            avg_psych = filtered_df['psychological_score'].mean()
+            st.metric("Avg Psychological", f"{avg_psych:.2f}")
+    
+    with qa_col2:
+        if 'leadership_potential' in filtered_df.columns:
+            avg_lead = filtered_df['leadership_potential'].mean()
+            st.metric("Avg Leadership", f"{avg_lead:.2f}")
+    
+    with qa_col3:
+        if 'has_quick_assessment' in filtered_df.columns:
+            qa_count = filtered_df['has_quick_assessment'].sum()
+            st.metric("QA Coverage", f"{qa_count}/{len(filtered_df)}")
+    
+    with qa_col4:
+        if 'holistic_score' in filtered_df.columns:
+            avg_holistic = filtered_df['holistic_score'].mean()
+            st.metric("Avg Holistic Score", f"{avg_holistic:.2f}")
 
 # Model utilities: try import xgboost, fallback to sklearn
 try:

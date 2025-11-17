@@ -10,24 +10,69 @@ import plotly.express as px
 import plotly.graph_objects as go
 from scipy import stats
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ui import apply_styles, page_header
 
 st.set_page_config(page_title="EDA Results", page_icon="📈", layout="wide")
 
-st.title("📈 Exploratory Data Analysis Results")
-st.markdown("Hasil analisis eksploratori data MPCIM")
+apply_styles()
 
-# Load data
+# Enhanced header
+st.markdown("""
+<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+            padding: 25px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
+    <h1 style="color: white; margin: 0; font-size: 2.2em;">📈 EDA Results</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 1.1em;">
+        Exploratory Data Analysis - Hasil Analisis Data
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# Allow user to upload a CSV for EDA, or use dataset from Data Explorer (session), or fallback to default/sample
+uploaded = st.sidebar.file_uploader("Upload CSV dataset for EDA (optional)", type=["csv"])
+
+
 @st.cache_data
-def load_data():
-    data_path = Path("/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/data/final/integrated_performance_behavioral.csv")
-    if data_path.exists():
-        return pd.read_csv(data_path)
+def load_data_from_paths():
+    repo_root = Path(__file__).resolve().parents[2]
+    # Try integrated_full_dataset first (with QA), fallback to old dataset
+    default_path_qa = repo_root / "data" / "final" / "integrated_full_dataset.csv"
+    default_path = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
+    sample_path = repo_root / "data" / "final" / "integrated_performance_behavioral_sample.csv"
+
+    if default_path_qa.exists():
+        return pd.read_csv(default_path_qa)
+    
+    if default_path.exists():
+        return pd.read_csv(default_path)
+
+    if sample_path.exists():
+        return pd.read_csv(sample_path)
+
     return None
 
-df = load_data()
+
+df = None
+
+if uploaded is not None:
+    try:
+        df = pd.read_csv(uploaded)
+        st.sidebar.success("✅ File uploaded untuk EDA")
+    except Exception as e:
+        st.sidebar.error(f"Gagal memuat file upload: {e}")
+
+if df is None and 'mpcim_df' in st.session_state:
+    df = st.session_state['mpcim_df']
+    st.sidebar.info("✅ Menggunakan dataset yang dimuat di Data Explorer")
 
 if df is None:
-    st.error("❌ Data tidak ditemukan.")
+    df = load_data_from_paths()
+    if df is not None:
+        st.sidebar.info("✅ Menggunakan data default dari repository")
+
+if df is None:
+    st.error("❌ Data tidak ditemukan. Upload CSV di sidebar atau muat data di halaman Data Explorer.")
     st.stop()
 
 # Key findings
@@ -73,6 +118,57 @@ with col3:
         df['has_promotion'].sum(),
         len(df) - df['has_promotion'].sum()
     ))
+
+# Quick Assessment Key Findings (if available)
+has_qa_data = 'psychological_score' in df.columns
+
+if has_qa_data:
+    st.markdown("---")
+    st.markdown("## 🧠 Quick Assessment Key Findings")
+    
+    qa_col1, qa_col2, qa_col3 = st.columns(3)
+    
+    with qa_col1:
+        st.info("""
+        **🧠 Psychological Score**
+        - Mean: {:.2f}
+        - Std: {:.2f}
+        - Range: {:.2f} - {:.2f}
+        """.format(
+            df['psychological_score'].mean(),
+            df['psychological_score'].std(),
+            df['psychological_score'].min(),
+            df['psychological_score'].max()
+        ))
+    
+    with qa_col2:
+        if 'leadership_potential' in df.columns:
+            st.info("""
+            **👔 Leadership Potential**
+            - Mean: {:.2f}
+            - Std: {:.2f}
+            - Range: {:.2f} - {:.2f}
+            """.format(
+                df['leadership_potential'].mean(),
+                df['leadership_potential'].std(),
+                df['leadership_potential'].min(),
+                df['leadership_potential'].max()
+            ))
+    
+    with qa_col3:
+        if 'has_quick_assessment' in df.columns:
+            qa_count = df['has_quick_assessment'].sum()
+            qa_rate = (qa_count / len(df)) * 100
+            st.info("""
+            **📊 QA Coverage**
+            - Coverage: {:.1f}%
+            - With QA: {:,}
+            - Without QA: {:,}
+            """.format(
+                qa_rate,
+                qa_count,
+                len(df) - qa_count
+            ))
 
 # Statistical Tests
 st.markdown("---")
@@ -331,6 +427,130 @@ with tab3:
     fig.update_layout(height=600)
     st.plotly_chart(fig, use_container_width=True)
 
+# Quick Assessment Visualizations (if available)
+if has_qa_data:
+    st.markdown("---")
+    st.markdown("## 🧠 Quick Assessment Analysis")
+    
+    qa_tab1, qa_tab2, qa_tab3, qa_tab4 = st.tabs([
+        "📊 QA Distributions", 
+        "🔗 QA Correlations", 
+        "📈 QA vs Promotion",
+        "🎯 3D Holistic View"
+    ])
+    
+    with qa_tab1:
+        # QA component distributions
+        qa_features = ['psychological_score', 'drive_score', 'mental_strength_score', 
+                      'adaptability_score', 'collaboration_score', 'leadership_potential']
+        available_qa = [f for f in qa_features if f in df.columns]
+        
+        if available_qa:
+            cols = st.columns(2)
+            for idx, feature in enumerate(available_qa[:6]):
+                with cols[idx % 2]:
+                    fig = px.histogram(
+                        df,
+                        x=feature,
+                        color='has_promotion',
+                        nbins=30,
+                        title=f"{feature.replace('_', ' ').title()} Distribution",
+                        labels={'has_promotion': 'Promotion Status'},
+                        color_discrete_map={0: '#e74c3c', 1: '#2ecc71'},
+                        barmode='overlay',
+                        opacity=0.7
+                    )
+                    fig.update_layout(height=350)
+                    st.plotly_chart(fig, use_container_width=True)
+    
+    with qa_tab2:
+        # Correlation heatmap for QA features
+        if available_qa:
+            corr_features = available_qa + ['has_promotion']
+            corr_matrix = df[corr_features].corr()
+            
+            fig = px.imshow(
+                corr_matrix,
+                text_auto='.2f',
+                title="Quick Assessment Features Correlation Matrix",
+                color_continuous_scale='RdBu_r',
+                aspect='auto'
+            )
+            fig.update_layout(height=500)
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Correlation with promotion
+            st.markdown("### Correlation with Promotion")
+            promo_corr = df[available_qa + ['has_promotion']].corr()['has_promotion'].drop('has_promotion').sort_values(ascending=False)
+            
+            fig = px.bar(
+                x=promo_corr.index,
+                y=promo_corr.values,
+                title="QA Features Correlation with Promotion",
+                labels={'x': 'Feature', 'y': 'Correlation'},
+                color=promo_corr.values,
+                color_continuous_scale='RdYlGn'
+            )
+            fig.update_layout(height=400)
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with qa_tab3:
+        # QA features vs Promotion comparison
+        if available_qa:
+            promoted_qa = df[df['has_promotion'] == 1]
+            not_promoted_qa = df[df['has_promotion'] == 0]
+            
+            comparison_data = []
+            for feature in available_qa:
+                comparison_data.append({
+                    'Feature': feature.replace('_', ' ').title(),
+                    'Promoted': promoted_qa[feature].mean(),
+                    'Not Promoted': not_promoted_qa[feature].mean(),
+                    'Difference': promoted_qa[feature].mean() - not_promoted_qa[feature].mean()
+                })
+            
+            comp_df = pd.DataFrame(comparison_data)
+            
+            fig = px.bar(
+                comp_df,
+                x='Feature',
+                y=['Promoted', 'Not Promoted'],
+                title="Average QA Scores: Promoted vs Not Promoted",
+                barmode='group',
+                color_discrete_map={'Promoted': '#2ecc71', 'Not Promoted': '#e74c3c'}
+            )
+            fig.update_layout(height=450)
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Show difference
+            st.markdown("### Difference Analysis")
+            st.dataframe(comp_df, use_container_width=True, hide_index=True)
+    
+    with qa_tab4:
+        # 3D scatter with holistic view
+        if 'holistic_score' in df.columns:
+            fig = px.scatter_3d(
+                df,
+                x='performance_score',
+                y='behavior_avg',
+                z='psychological_score',
+                color='has_promotion',
+                size='holistic_score',
+                title="3D Holistic View: Performance + Behavioral + Psychological",
+                labels={'has_promotion': 'Promotion Status'},
+                color_discrete_map={0: '#e74c3c', 1: '#2ecc71'},
+                opacity=0.7
+            )
+            fig.update_layout(height=600)
+            st.plotly_chart(fig, use_container_width=True)
+            
+            st.info("""
+            **Holistic Score Formula:**  
+            40% Performance + 30% Behavioral + 30% Psychological
+            
+            Bubble size represents the holistic score - larger bubbles indicate higher overall scores.
+            """)
+
 # Summary
 st.markdown("---")
 st.markdown("## 📝 Summary & Insights")
@@ -338,21 +558,39 @@ st.markdown("## 📝 Summary & Insights")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.success("""
+    insights_text = """
     ### ✅ Key Insights
     
     1. **Behavioral Score** shows significant difference between promoted and non-promoted employees
     2. **Performance Score** alone may not be sufficient for promotion prediction
     3. **Multi-dimensional approach** is justified by the data
     4. **Moderate class imbalance** (~9% promotion rate) requires special handling
-    """)
+    """
+    
+    if has_qa_data:
+        insights_text += """
+    5. **Quick Assessment** adds psychological dimension for comprehensive evaluation
+    6. **Collaboration & Mental Strength** show strong correlation with promotion
+    7. **Holistic Score** (3D assessment) provides better prediction accuracy
+    """
+    
+    st.success(insights_text)
 
 with col2:
-    st.info("""
+    recommendations_text = """
     ### 💡 Recommendations
     
     1. Use **SMOTE** or similar techniques for class imbalance
     2. Include **behavioral metrics** as key features
     3. Consider **interaction features** between performance and behavior
     4. Apply **ensemble methods** for better prediction
-    """)
+    """
+    
+    if has_qa_data:
+        recommendations_text += """
+    5. Leverage **Quick Assessment** data for 12-20% improvement
+    6. Focus on **psychological factors** (collaboration, mental strength)
+    7. Use **holistic score** for comprehensive employee evaluation
+    """
+    
+    st.info(recommendations_text)

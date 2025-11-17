@@ -16,6 +16,9 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ui import apply_styles, page_header
 
 # caching helper for data
 @st.cache_data(ttl=60 * 60)
@@ -25,46 +28,39 @@ def load_csv_from_path(path_or_buffer):
 # Page configuration
 st.set_page_config(
     page_title="MPCIM Dashboard",
-    page_icon="📊",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Apply global styles
+apply_styles()
+
+# Enhanced Title with gradient
 st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f77b4;
-        text-align: center;
-        padding: 1rem 0;
-    }
-    .sub-header {
-        font-size: 1.2rem;
-        color: #555;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
-    .stAlert {
-        margin-top: 1rem;
-    }
-</style>
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            padding: 30px; border-radius: 15px; margin-bottom: 30px; text-align: center;">
+    <h1 style="color: white; margin: 0; font-size: 2.5em;">🎓 MPCIM Dashboard</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 1.2em;">
+        Multi-Dimensional Performance-Career Integration Model
+    </p>
+    <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0 0; font-size: 0.9em;">
+        Prediksi Promosi Karyawan Berbasis Machine Learning
+    </p>
+</div>
 """, unsafe_allow_html=True)
 
-# Title
-st.markdown('<div class="main-header">📊 MPCIM Dashboard</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Multi-Dimensional Performance-Career Integration Model</div>', unsafe_allow_html=True)
-
-# Sidebar
+# Enhanced Sidebar
 with st.sidebar:
-    st.image("https://via.placeholder.com/300x100/1f77b4/ffffff?text=MPCIM+Thesis", use_container_width=True)
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+        <h2 style="color: white; margin: 0;">🎓 MPCIM</h2>
+        <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 0.9em;">
+            Thesis Dashboard
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("### 📚 Navigation")
     st.markdown("""
@@ -83,50 +79,117 @@ with st.sidebar:
     **Topic**: Predictive Analytics for Career Progression
     """)
 
-# Main content
-st.markdown("## 🎯 Tentang Penelitian")
+# Main content with enhanced cards
+st.markdown("""
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+    <h2 style="color: #667eea; margin-top: 0;">📚 Tentang Penelitian</h2>
+</div>
+""", unsafe_allow_html=True)
 
 col1, col2 = st.columns([2, 1])
 
 with col1:
     st.markdown("""
-    ### Multi-Dimensional Performance-Career Integration Model (MPCIM)
+    <div style="background: white; padding: 25px; border-radius: 10px; 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+        <h3 style="color: #667eea; margin-top: 0;">
+            🎯 Multi-Dimensional Performance-Career Integration Model (MPCIM)
+        </h3>
+        <p style="font-size: 1.05em; line-height: 1.6;">
+            Penelitian ini mengembangkan model prediktif untuk <strong>career progression</strong> 
+            menggunakan pendekatan <strong>multi-dimensional</strong> yang mengintegrasikan:
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    Penelitian ini mengembangkan model prediktif untuk **career progression** menggunakan 
-    pendekatan **multi-dimensional** yang mengintegrasikan:
+    # Feature cards
+    feat_col1, feat_col2, feat_col3 = st.columns(3)
     
-    1. **📊 Performance Metrics**: Skor kinerja karyawan
-    2. **🎭 Behavioral Competencies**: Kompetensi perilaku
-    3. **👤 Demographic Factors**: Faktor demografis
+    with feat_col1:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    padding: 20px; border-radius: 10px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 2.5em;">📊</h1>
+            <h4 style="margin: 10px 0;">Performance</h4>
+            <p style="margin: 0; font-size: 0.9em;">Skor kinerja karyawan</p>
+        </div>
+        """, unsafe_allow_html=True)
     
-    #### 🎓 Kontribusi Penelitian
+    with feat_col2:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+                    padding: 20px; border-radius: 10px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 2.5em;">🎭</h1>
+            <h4 style="margin: 10px 0;">Behavioral</h4>
+            <p style="margin: 0; font-size: 0.9em;">Kompetensi perilaku</p>
+        </div>
+        """, unsafe_allow_html=True)
     
-    - ✅ **Pendekatan Holistik**: Mengatasi keterbatasan metrik tunggal
-    - ✅ **Machine Learning**: Menggunakan algoritma ML advanced (XGBoost, Neural Networks)
-    - ✅ **Interpretability**: Analisis feature importance dengan SHAP
-    - ✅ **Practical Impact**: Aplikasi nyata untuk HR decision-making
+    with feat_col3:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); 
+                    padding: 20px; border-radius: 10px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 2.5em;">🧠</h1>
+            <h4 style="margin: 10px 0;">Psychological</h4>
+            <p style="margin: 0; font-size: 0.9em;">Quick Assessment</p>
+        </div>
+        """, unsafe_allow_html=True)
     
-    #### 📈 Metodologi
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    - **Data**: 1,500+ employee records
-    - **Models**: Logistic Regression, Random Forest, XGBoost, Neural Networks
-    - **Evaluation**: Accuracy, Precision, Recall, F1-Score, ROC-AUC
-    - **Validation**: Stratified cross-validation
-    """)
+    # Contributions
+    st.markdown("""
+    <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; 
+                border-left: 4px solid #4CAF50; margin-bottom: 15px;">
+        <h4 style="color: #2e7d32; margin-top: 0;">✅ Kontribusi Penelitian</h4>
+        <ul style="margin-bottom: 0;">
+            <li><strong>Pendekatan 3-Dimensi</strong>: Performance + Behavioral + Psychological</li>
+            <li><strong>Quick Assessment Integration</strong>: 12 komponen psikologis untuk prediksi lebih akurat</li>
+            <li><strong>Machine Learning</strong>: Algoritma ML advanced (XGBoost, Neural Networks)</li>
+            <li><strong>Interpretability</strong>: Analisis feature importance dengan SHAP</li>
+            <li><strong>Practical Impact</strong>: Aplikasi nyata untuk HR decision-making</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Methodology
+    st.markdown("""
+    <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; 
+                border-left: 4px solid #2196F3;">
+        <h4 style="color: #1565c0; margin-top: 0;">🔬 Metodologi</h4>
+        <ul style="margin-bottom: 0;">
+            <li><strong>Data</strong>: 712 employee records + 826 Quick Assessment records</li>
+            <li><strong>Features</strong>: 23 features (14 traditional + 9 psychological)</li>
+            <li><strong>Models</strong>: Logistic Regression, Random Forest, XGBoost, Neural Networks</li>
+            <li><strong>Evaluation</strong>: Accuracy, Precision, Recall, F1-Score, ROC-AUC</li>
+            <li><strong>Validation</strong>: Stratified cross-validation + SMOTE balancing</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col2:
-    st.markdown("### 📊 Quick Stats")
+    st.markdown("""
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+        <h3 style="color: #667eea; margin: 0;">📊 Quick Stats</h3>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Robust data loading: prefer repository relative path, else DATA_URL env var
     repo_root = Path(__file__).resolve().parents[1]
+    # Try to load integrated_full_dataset first (with QA), fallback to old dataset
+    default_data_qa = repo_root / "data" / "final" / "integrated_full_dataset.csv"
     default_data = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
     data_url = os.environ.get("DATA_URL")  # allow deploy to point to an external CSV
 
     df = None
+    has_qa_data = False
     data_load_error = None
 
     try:
-        if default_data.exists():
+        if default_data_qa.exists():
+            df = load_csv_from_path(default_data_qa)
+            has_qa_data = True
+        elif default_data.exists():
             df = load_csv_from_path(default_data)
         elif data_url:
             st.info("Mengunduh data dari DATA_URL environment variable...")
@@ -136,7 +199,7 @@ with col2:
             df = load_csv_from_path(io.BytesIO(raw))
         else:
             data_load_error = (
-                "Data tidak ditemukan. Tambahkan file CSV di: 'data/final/integrated_performance_behavioral.csv' "
+                "Data tidak ditemukan. Tambahkan file CSV di: 'data/final/integrated_full_dataset.csv' "
                 "atau set environment variable DATA_URL ke URL file CSV."
             )
     except Exception as e:
@@ -149,6 +212,22 @@ with col2:
         else:
             st.metric("Promotion Rate", "N/A")
         st.metric("Features", len(df.columns))
+        
+        # Quick Assessment stats
+        if has_qa_data and 'has_quick_assessment' in df.columns:
+            qa_coverage = df['has_quick_assessment'].sum()
+            st.metric("QA Coverage", f"{qa_coverage}/{len(df)} ({qa_coverage/len(df)*100:.1f}%)",
+                     help="Jumlah karyawan dengan data Quick Assessment")
+            
+            if 'psychological_score' in df.columns:
+                avg_psych = df['psychological_score'].mean()
+                st.metric("Avg Psychological Score", f"{avg_psych:.1f}",
+                         help="Rata-rata skor psikologis dari Quick Assessment")
+            
+            if 'leadership_potential' in df.columns:
+                avg_leadership = df['leadership_potential'].mean()
+                st.metric("Avg Leadership Potential", f"{avg_leadership:.1f}",
+                         help="Rata-rata potensi kepemimpinan")
 
         # Promotion distribution
         if 'has_promotion' in df.columns:
@@ -224,6 +303,86 @@ with col3:
     - Feature importance
     - Model comparison
     """)
+
+# Quick Assessment Overview
+if df is not None and has_qa_data:
+    st.markdown("---")
+    st.markdown("## 🧠 Quick Assessment Overview")
+    
+    qa_col1, qa_col2 = st.columns([2, 1])
+    
+    with qa_col1:
+        st.markdown("""
+        <div style="background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3 style="color: #667eea; margin-top: 0;">📊 Komponen Psikologis</h3>
+            <p>Quick Assessment menambahkan dimensi psikologis untuk prediksi yang lebih akurat:</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Show QA component distributions
+        qa_components = ['drive_score', 'mental_strength_score', 'adaptability_score', 
+                        'collaboration_score', 'psychological_score', 'leadership_potential']
+        
+        available_components = [col for col in qa_components if col in df.columns]
+        
+        if available_components:
+            # Create bar chart for average scores
+            avg_scores = {col.replace('_', ' ').title(): df[col].mean() 
+                         for col in available_components}
+            
+            fig = go.Figure(data=[
+                go.Bar(
+                    x=list(avg_scores.keys()),
+                    y=list(avg_scores.values()),
+                    marker_color=['#667eea', '#764ba2', '#f093fb', '#f5576c', '#fa709a', '#fee140'],
+                    text=[f"{v:.1f}" for v in avg_scores.values()],
+                    textposition='outside'
+                )
+            ])
+            fig.update_layout(
+                title="Average Quick Assessment Scores",
+                xaxis_title="Component",
+                yaxis_title="Average Score",
+                height=400,
+                showlegend=False
+            )
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with qa_col2:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    padding: 20px; border-radius: 10px; color: white; margin-bottom: 15px;">
+            <h4 style="margin: 0;">🎯 QA Impact</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Show QA impact metrics
+        if 'has_quick_assessment' in df.columns and 'has_promotion' in df.columns:
+            qa_promo_rate = df[df['has_quick_assessment'] == 1]['has_promotion'].mean()
+            no_qa_promo_rate = df[df['has_quick_assessment'] == 0]['has_promotion'].mean()
+            
+            st.metric("Promotion Rate (With QA)", f"{qa_promo_rate*100:.1f}%")
+            st.metric("Promotion Rate (Without QA)", f"{no_qa_promo_rate*100:.1f}%")
+            
+            if qa_promo_rate > no_qa_promo_rate:
+                diff = (qa_promo_rate - no_qa_promo_rate) * 100
+                st.success(f"✅ QA data shows +{diff:.1f}% higher promotion rate")
+            else:
+                st.info("ℹ️ QA data provides additional insights for prediction")
+        
+        # Feature importance from QA
+        st.markdown("""
+        <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <h5 style="color: #2e7d32; margin-top: 0;">🔑 Key QA Features</h5>
+            <ul style="margin-bottom: 0; font-size: 0.9em;">
+                <li><strong>Collaboration</strong>: 3-4% importance</li>
+                <li><strong>Mental Strength</strong>: 4% importance</li>
+                <li><strong>Leadership Potential</strong>: 3% importance</li>
+                <li><strong>Drive Score</strong>: 2-3% importance</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Instructions
 st.markdown("---")
