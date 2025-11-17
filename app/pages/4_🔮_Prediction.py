@@ -39,7 +39,10 @@ try:
         st.sidebar.success(f"✅ {ai_provider} Ready")
     else:
         print(f"⚠️ AI Service not configured")
-        st.sidebar.warning("⚠️ AI Not Configured\n\nSet GEMINI_API_KEY in .env file")
+        # Get appropriate message based on environment
+        from services.ai_service import get_ai_status
+        status = get_ai_status()
+        st.sidebar.warning(status['message'])
 except Exception as e:
     ai_service = None
     ai_enabled = False
