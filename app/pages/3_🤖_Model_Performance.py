@@ -10,11 +10,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
 import json
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ui import apply_styles, page_header
 
 st.set_page_config(page_title="Model Performance", page_icon="🤖", layout="wide")
 
-st.title("🤖 Model Performance Analysis")
-st.markdown("Analisis performa model Machine Learning untuk prediksi promosi")
+apply_styles()
+
+page_header("Model Performance Analysis", "Analisis performa model Machine Learning untuk prediksi promosi", icon="🤖")
 
 # Load model results
 @st.cache_data

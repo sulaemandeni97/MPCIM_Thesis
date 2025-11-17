@@ -16,6 +16,9 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ui import apply_styles, page_header
 
 # caching helper for data
 @st.cache_data(ttl=60 * 60)
@@ -30,33 +33,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f77b4;
-        text-align: center;
-        padding: 1rem 0;
-    }
-    .sub-header {
-        font-size: 1.2rem;
-        color: #555;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
-    .stAlert {
-        margin-top: 1rem;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Apply global styles
+apply_styles()
 
 # Title
 st.markdown('<div class="main-header">📊 MPCIM Dashboard</div>', unsafe_allow_html=True)

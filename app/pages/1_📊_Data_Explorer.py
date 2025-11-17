@@ -13,11 +13,15 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ui import apply_styles, page_header
 
 st.set_page_config(page_title="Data Explorer", page_icon="📊", layout="wide")
 
-st.title("📊 Data Explorer")
-st.markdown("Eksplorasi dan analisis dataset MPCIM")
+apply_styles()
+
+page_header("Data Explorer", "Eksplorasi dan analisis dataset MPCIM", icon="📊")
 
 
 # Robust data loader with uploader and sample fallback
@@ -59,6 +63,13 @@ df = load_data(uploaded_file=uploaded)
 if df is None:
     st.error("❌ Data tidak ditemukan atau gagal dimuat. Upload CSV atau tambahkan data ke folder data/final/ atau set DATA_URL.")
     st.stop()
+
+# Store loaded dataset in session_state so other pages (EDA, Model) can reuse it
+try:
+    st.session_state['mpcim_df'] = df
+except Exception:
+    # session_state may not be available in very old Streamlit versions; ignore silently
+    pass
 
 # Normalize column names (common variations)
 col_map = {}

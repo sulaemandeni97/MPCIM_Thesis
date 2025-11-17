@@ -10,24 +10,55 @@ import plotly.express as px
 import plotly.graph_objects as go
 from scipy import stats
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ui import apply_styles, page_header
 
 st.set_page_config(page_title="EDA Results", page_icon="📈", layout="wide")
 
-st.title("📈 Exploratory Data Analysis Results")
-st.markdown("Hasil analisis eksploratori data MPCIM")
+apply_styles()
 
-# Load data
+page_header("Exploratory Data Analysis Results", "Hasil analisis eksploratori data MPCIM", icon="📈")
+
+# Allow user to upload a CSV for EDA, or use dataset from Data Explorer (session), or fallback to default/sample
+uploaded = st.sidebar.file_uploader("Upload CSV dataset for EDA (optional)", type=["csv"])
+
+
 @st.cache_data
-def load_data():
-    data_path = Path("/Users/denisulaeman/CascadeProjects/MPCIM_Thesis/data/final/integrated_performance_behavioral.csv")
-    if data_path.exists():
-        return pd.read_csv(data_path)
+def load_data_from_paths():
+    repo_root = Path(__file__).resolve().parents[2]
+    default_path = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
+    sample_path = repo_root / "data" / "final" / "integrated_performance_behavioral_sample.csv"
+
+    if default_path.exists():
+        return pd.read_csv(default_path)
+
+    if sample_path.exists():
+        return pd.read_csv(sample_path)
+
     return None
 
-df = load_data()
+
+df = None
+
+if uploaded is not None:
+    try:
+        df = pd.read_csv(uploaded)
+        st.sidebar.success("✅ File uploaded untuk EDA")
+    except Exception as e:
+        st.sidebar.error(f"Gagal memuat file upload: {e}")
+
+if df is None and 'mpcim_df' in st.session_state:
+    df = st.session_state['mpcim_df']
+    st.sidebar.info("✅ Menggunakan dataset yang dimuat di Data Explorer")
 
 if df is None:
-    st.error("❌ Data tidak ditemukan.")
+    df = load_data_from_paths()
+    if df is not None:
+        st.sidebar.info("✅ Menggunakan data default dari repository")
+
+if df is None:
+    st.error("❌ Data tidak ditemukan. Upload CSV di sidebar atau muat data di halaman Data Explorer.")
     st.stop()
 
 # Key findings

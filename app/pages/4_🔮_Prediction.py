@@ -8,11 +8,15 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ui import apply_styles, page_header
 
 st.set_page_config(page_title="Promotion Prediction", page_icon="🔮", layout="wide")
 
-st.title("🔮 Promotion Prediction Tool")
-st.markdown("Prediksi probabilitas promosi berdasarkan data karyawan")
+apply_styles()
+
+page_header("Promotion Prediction Tool", "Prediksi probabilitas promosi berdasarkan data karyawan", icon="🔮")
 
 # Mock prediction function (replace with actual model)
 def predict_promotion(features):

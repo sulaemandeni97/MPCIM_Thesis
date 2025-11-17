@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# minimal system deps
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates wget && rm -rf /var/lib/apt/lists/*
+
+COPY app/requirements-streamlit.txt /tmp/requirements-streamlit.txt
+# append xgboost to requirements for test
+RUN printf '\n# xgboost for test\nxgboost==2.0.3' >> /tmp/requirements-streamlit.txt
+
+RUN python -m pip install --upgrade pip setuptools wheel
+RUN pip install -r /tmp/requirements-streamlit.txt
+
+CMD ["python", "--version"]

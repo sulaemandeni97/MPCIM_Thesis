@@ -1,0 +1,66 @@
+:root{
+    --primary: #1f77b4;
+    --accent: #9b59b6;
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --muted: #6c757d;
+    --bg: #f8f9fb;
+    --card: #ffffff;
+    --radius: 10px;
+}
+
+/* Layout tweaks */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    background-color: var(--bg);
+}
+
+.main-header {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: left;
+    padding: 0.3rem 0.3rem;
+}
+
+.sub-header {
+    font-size: 1.05rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+}
+
+.metric-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,249,251,0.9));
+    padding: 0.9rem;
+    border-radius: var(--radius);
+    border: 1px solid rgba(31,119,180,0.08);
+}
+
+.feature-card {
+    background: var(--card);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(19,24,34,0.04);
+    border: 1px solid rgba(31,119,180,0.04);
+}
+
+.app-footer {
+    text-align: center;
+    color: #888;
+    padding: 1.25rem 0;
+}
+
+/* Improve sidebar appearance */
+.css-1lcbmhc .stSidebar { /* selector may change across streamlit versions */
+    padding-top: 0.5rem;
+}
+
+/* Buttons and inputs */
+.stButton>button {
+    border-radius: 8px;
+}
+
+/* Small responsive tweaks for charts */
+@media (max-width: 760px) {
+    .main-header { font-size: 1.6rem; }
+}
