@@ -186,7 +186,12 @@ with col2:
     data_load_error = None
 
     try:
-        if default_data_qa.exists():
+        # Check if Data Explorer has loaded data (shared state)
+        if 'mpcim_df' in st.session_state and st.session_state['mpcim_df'] is not None:
+            df = st.session_state['mpcim_df']
+            has_qa_data = 'has_quick_assessment' in df.columns
+            st.info("📊 Menggunakan dataset dari Data Explorer")
+        elif default_data_qa.exists():
             df = load_csv_from_path(default_data_qa)
             has_qa_data = True
         elif default_data.exists():

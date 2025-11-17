@@ -33,17 +33,13 @@ service = load_service()
 
 # Initialize AI service (supports OpenAI and Gemini)
 try:
-    ai_service = create_ai_service()  # Auto-detect provider
-    ai_enabled = True
-    ai_provider = ai_service.get_provider()
-    print(f"✅ AI Service initialized: {ai_provider}")
-    st.sidebar.success(f"✅ {ai_provider.title()} Ready")
-except (ValueError, ImportError) as e:
-    ai_service = None
-    ai_enabled = False
-    ai_provider = 'none'
-    print(f"⚠️  AI Service not available: {e}")
-    st.sidebar.warning(f"⚠️  Not Available\n\n{str(e)}")
+    ai_service, ai_provider, ai_enabled = create_ai_service()  # Returns tuple: (service, name, enabled)
+    if ai_enabled:
+        print(f"✅ AI Service initialized: {ai_provider}")
+        st.sidebar.success(f"✅ {ai_provider} Ready")
+    else:
+        print(f"⚠️ AI Service not configured")
+        st.sidebar.warning("⚠️ AI Not Configured\n\nSet GEMINI_API_KEY in .env file")
 except Exception as e:
     ai_service = None
     ai_enabled = False
