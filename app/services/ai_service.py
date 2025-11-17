@@ -5,6 +5,29 @@ Creates appropriate AI service based on available API keys
 
 import os
 from typing import Optional
+from pathlib import Path
+
+# Load environment variables from .env file (local development)
+try:
+    from dotenv import load_dotenv
+    # Load .env from project root
+    env_path = Path(__file__).resolve().parents[2] / '.env'
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path)
+except ImportError:
+    pass  # python-dotenv not installed, will use system env vars
+
+# Load from Streamlit secrets (production deployment)
+try:
+    import streamlit as st
+    # Check if running in Streamlit and secrets are available
+    if hasattr(st, 'secrets') and st.secrets:
+        # Inject Streamlit secrets into environment variables
+        for key in st.secrets:
+            if key not in os.environ:
+                os.environ[key] = str(st.secrets[key])
+except Exception:
+    pass  # Not running in Streamlit or secrets not available
 
 
 def create_ai_service():
