@@ -495,7 +495,7 @@ with st.expander("🏆 Gemini AI Analysis - Interpretasi Model Performance", exp
                     
                     # Get all models for comparison
                     all_models_list = []
-                    for idx, row in combined_df.iterrows():
+                    for idx, row in comparison_df.iterrows():
                         all_models_list.append({
                             'name': row['Model'],
                             'accuracy': row['Accuracy'],
@@ -548,7 +548,7 @@ with st.expander("🏆 Gemini AI Analysis - Interpretasi Model Performance", exp
                 }
                 
                 all_models_list = []
-                for idx, row in combined_df.iterrows():
+                for idx, row in comparison_df.iterrows():
                     all_models_list.append({
                         'name': row['Model'],
                         'accuracy': row['Accuracy'],
