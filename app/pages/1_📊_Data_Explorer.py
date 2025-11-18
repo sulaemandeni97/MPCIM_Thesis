@@ -662,3 +662,72 @@ with tab4:
         )
         
         st.plotly_chart(fig, use_container_width=True)
+
+# AI Analysis Section
+st.markdown("---")
+st.markdown("## 🤖 AI Analysis & Insights")
+
+with st.expander("📊 Gemini AI Analysis - Interpretasi Dataset", expanded=False):
+    st.markdown("""
+    Gemini AI akan menganalisis dataset dan memberikan interpretasi mendalam tentang:
+    - Karakteristik dataset
+    - Pola dan tren yang teridentifikasi
+    - Rekomendasi untuk HR
+    """)
+    
+    if st.button("🔍 Generate AI Analysis", key="data_explorer_ai"):
+        with st.spinner("🤖 Gemini AI sedang menganalisis dataset..."):
+            try:
+                from services.page_analysis_service import create_page_analysis_service
+                
+                # Create analysis service
+                analysis_service = create_page_analysis_service()
+                
+                if not analysis_service.is_enabled():
+                    st.warning("⚠️ Gemini AI tidak tersedia. Pastikan GEMINI_API_KEY sudah dikonfigurasi.")
+                    st.info("💡 Lihat STREAMLIT_DEPLOY_GUIDE.md untuk setup instructions.")
+                else:
+                    # Prepare statistics
+                    stats = {
+                        'total_rows': len(filtered_df),
+                        'total_columns': len(filtered_df.columns),
+                        'promotion_rate': (filtered_df['has_promotion'].sum() / len(filtered_df) * 100) if 'has_promotion' in filtered_df.columns else 0,
+                        'promoted_count': filtered_df['has_promotion'].sum() if 'has_promotion' in filtered_df.columns else 0,
+                        'not_promoted_count': (filtered_df['has_promotion'] == 0).sum() if 'has_promotion' in filtered_df.columns else 0,
+                        'avg_performance': filtered_df['performance_score'].mean() if 'performance_score' in filtered_df.columns else 0,
+                        'avg_behavioral': filtered_df['behavior_avg'].mean() if 'behavior_avg' in filtered_df.columns else 0,
+                        'avg_tenure': filtered_df['tenure_years'].mean() if 'tenure_years' in filtered_df.columns else 0,
+                        'qa_coverage': (filtered_df['has_quick_assessment'].sum() / len(filtered_df) * 100) if 'has_quick_assessment' in filtered_df.columns else 0,
+                        'qa_count': filtered_df['has_quick_assessment'].sum() if 'has_quick_assessment' in filtered_df.columns else 0,
+                    }
+                    
+                    # Get AI analysis
+                    analysis = analysis_service.analyze_data_explorer(filtered_df, stats)
+                    
+                    # Display analysis
+                    st.markdown(analysis)
+                    
+                    st.success("✅ Analisis selesai!")
+                    
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+                st.info("Menggunakan analisis fallback...")
+                
+                # Show fallback analysis
+                stats = {
+                    'total_rows': len(filtered_df),
+                    'total_columns': len(filtered_df.columns),
+                    'promotion_rate': (filtered_df['has_promotion'].sum() / len(filtered_df) * 100) if 'has_promotion' in filtered_df.columns else 0,
+                    'promoted_count': filtered_df['has_promotion'].sum() if 'has_promotion' in filtered_df.columns else 0,
+                    'not_promoted_count': (filtered_df['has_promotion'] == 0).sum() if 'has_promotion' in filtered_df.columns else 0,
+                    'avg_performance': filtered_df['performance_score'].mean() if 'performance_score' in filtered_df.columns else 0,
+                    'avg_behavioral': filtered_df['behavior_avg'].mean() if 'behavior_avg' in filtered_df.columns else 0,
+                    'avg_tenure': filtered_df['tenure_years'].mean() if 'tenure_years' in filtered_df.columns else 0,
+                    'qa_coverage': (filtered_df['has_quick_assessment'].sum() / len(filtered_df) * 100) if 'has_quick_assessment' in filtered_df.columns else 0,
+                    'qa_count': filtered_df['has_quick_assessment'].sum() if 'has_quick_assessment' in filtered_df.columns else 0,
+                }
+                
+                from services.page_analysis_service import PageAnalysisService
+                fallback_service = PageAnalysisService()
+                fallback_analysis = fallback_service._fallback_data_explorer_analysis(stats)
+                st.markdown(fallback_analysis)
