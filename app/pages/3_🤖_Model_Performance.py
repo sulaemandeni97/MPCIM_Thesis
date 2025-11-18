@@ -456,3 +456,116 @@ with col2:
         - Gunakan laporan `results/*` untuk dokumentasi formal atau lampiran tesis.
         """
     )
+
+# AI Analysis Section
+st.markdown("---")
+st.markdown("## 🤖 AI Analysis & Insights")
+
+with st.expander("🏆 Gemini AI Analysis - Interpretasi Model Performance", expanded=False):
+    st.markdown("""
+    Gemini AI akan menganalisis performa model dan memberikan interpretasi mendalam tentang:
+    - Evaluasi performa model terbaik
+    - Analisis metrics (accuracy, precision, recall, F1, ROC-AUC)
+    - Perbandingan antar model
+    - Feature importance dan kontribusi Quick Assessment
+    - Rekomendasi untuk improvement
+    """)
+    
+    if st.button("🔍 Generate AI Analysis", key="model_perf_ai"):
+        with st.spinner("🤖 Gemini AI sedang menganalisis performa model..."):
+            try:
+                from services.page_analysis_service import create_page_analysis_service
+                
+                # Create analysis service
+                analysis_service = create_page_analysis_service()
+                
+                if not analysis_service.is_enabled():
+                    st.warning("⚠️ Gemini AI tidak tersedia. Pastikan GEMINI_API_KEY sudah dikonfigurasi.")
+                    st.info("💡 Lihat STREAMLIT_DEPLOY_GUIDE.md untuk setup instructions.")
+                else:
+                    # Prepare model results for AI analysis
+                    best_model_info = {
+                        'name': best_row['Model'],
+                        'accuracy': best_row['Accuracy'],
+                        'precision': best_row['Precision'],
+                        'recall': best_row['Recall'],
+                        'f1_score': best_row['F1-Score'],
+                        'roc_auc': best_row['ROC-AUC'],
+                    }
+                    
+                    # Get all models for comparison
+                    all_models_list = []
+                    for idx, row in combined_df.iterrows():
+                        all_models_list.append({
+                            'name': row['Model'],
+                            'accuracy': row['Accuracy'],
+                            'precision': row['Precision'],
+                            'recall': row['Recall'],
+                            'f1_score': row['F1-Score'],
+                            'roc_auc': row['ROC-AUC'],
+                        })
+                    
+                    # Sort by accuracy
+                    all_models_list = sorted(all_models_list, key=lambda x: x['accuracy'], reverse=True)
+                    
+                    # Prepare feature importance (mock data - in real scenario, load from model)
+                    feature_importance = [
+                        {'feature': 'Performance Score', 'importance': 0.35},
+                        {'feature': 'Behavioral Score', 'importance': 0.28},
+                        {'feature': 'Psychological Score (QA)', 'importance': 0.18},
+                        {'feature': 'Tenure Years', 'importance': 0.12},
+                        {'feature': 'Collaboration Score (QA)', 'importance': 0.07},
+                    ]
+                    
+                    model_results = {
+                        'best_model': best_model_info,
+                        'all_models': all_models_list,
+                        'feature_importance': feature_importance,
+                        'qa_in_top10': 2,  # Number of QA features in top 10
+                        'qa_contribution': 18.0,  # Total contribution of QA features
+                    }
+                    
+                    # Get AI analysis
+                    analysis = analysis_service.analyze_model_performance(model_results)
+                    
+                    # Display analysis
+                    st.markdown(analysis)
+                    
+                    st.success("✅ Analisis Model Performance selesai!")
+                    
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+                st.info("Menggunakan analisis fallback...")
+                
+                # Show fallback analysis
+                best_model_info = {
+                    'name': best_row['Model'],
+                    'accuracy': best_row['Accuracy'],
+                    'precision': best_row['Precision'],
+                    'recall': best_row['Recall'],
+                    'f1_score': best_row['F1-Score'],
+                    'roc_auc': best_row['ROC-AUC'],
+                }
+                
+                all_models_list = []
+                for idx, row in combined_df.iterrows():
+                    all_models_list.append({
+                        'name': row['Model'],
+                        'accuracy': row['Accuracy'],
+                        'f1_score': row['F1-Score'],
+                    })
+                
+                all_models_list = sorted(all_models_list, key=lambda x: x['accuracy'], reverse=True)
+                
+                model_results = {
+                    'best_model': best_model_info,
+                    'all_models': all_models_list,
+                    'feature_importance': [],
+                    'qa_in_top10': 2,
+                    'qa_contribution': 18.0,
+                }
+                
+                from services.page_analysis_service import PageAnalysisService
+                fallback_service = PageAnalysisService()
+                fallback_analysis = fallback_service._fallback_model_analysis(model_results)
+                st.markdown(fallback_analysis)

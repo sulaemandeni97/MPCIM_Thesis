@@ -594,3 +594,103 @@ with col2:
     """
     
     st.info(recommendations_text)
+
+# AI Analysis Section
+st.markdown("---")
+st.markdown("## 🤖 AI Analysis & Insights")
+
+with st.expander("📈 Gemini AI Analysis - Interpretasi EDA", expanded=False):
+    st.markdown("""
+    Gemini AI akan menganalisis hasil EDA dan memberikan interpretasi mendalam tentang:
+    - Distribusi dan pola data
+    - Perbedaan antara kelompok promoted dan not promoted
+    - Korelasi dan feature importance
+    - Implikasi untuk modeling
+    """)
+    
+    if st.button("🔍 Generate AI Analysis", key="eda_ai"):
+        with st.spinner("🤖 Gemini AI sedang menganalisis hasil EDA..."):
+            try:
+                from services.page_analysis_service import create_page_analysis_service
+                
+                # Create analysis service
+                analysis_service = create_page_analysis_service()
+                
+                if not analysis_service.is_enabled():
+                    st.warning("⚠️ Gemini AI tidak tersedia. Pastikan GEMINI_API_KEY sudah dikonfigurasi.")
+                    st.info("💡 Lihat STREAMLIT_DEPLOY_GUIDE.md untuk setup instructions.")
+                else:
+                    # Prepare statistics for AI analysis
+                    promoted = df[df['has_promotion'] == 1]
+                    not_promoted = df[df['has_promotion'] == 0]
+                    
+                    stats = {
+                        'promoted_pct': (len(promoted) / len(df) * 100),
+                        'not_promoted_pct': (len(not_promoted) / len(df) * 100),
+                        'imbalance_ratio': len(not_promoted) / len(promoted) if len(promoted) > 0 else 0,
+                        
+                        # Performance scores
+                        'promoted_perf_mean': promoted['performance_score'].mean() if 'performance_score' in promoted.columns else 0,
+                        'promoted_perf_std': promoted['performance_score'].std() if 'performance_score' in promoted.columns else 0,
+                        'not_promoted_perf_mean': not_promoted['performance_score'].mean() if 'performance_score' in not_promoted.columns else 0,
+                        'not_promoted_perf_std': not_promoted['performance_score'].std() if 'performance_score' in not_promoted.columns else 0,
+                        
+                        # Behavioral scores
+                        'promoted_behav_mean': promoted['behavior_avg'].mean() if 'behavior_avg' in promoted.columns else 0,
+                        'promoted_behav_std': promoted['behavior_avg'].std() if 'behavior_avg' in promoted.columns else 0,
+                        'not_promoted_behav_mean': not_promoted['behavior_avg'].mean() if 'behavior_avg' in not_promoted.columns else 0,
+                        'not_promoted_behav_std': not_promoted['behavior_avg'].std() if 'behavior_avg' in not_promoted.columns else 0,
+                        
+                        # Psychological scores (if available)
+                        'promoted_psych_mean': promoted['psychological_score'].mean() if 'psychological_score' in promoted.columns else 0,
+                        'promoted_psych_std': promoted['psychological_score'].std() if 'psychological_score' in promoted.columns else 0,
+                        'not_promoted_psych_mean': not_promoted['psychological_score'].mean() if 'psychological_score' in not_promoted.columns else 0,
+                        'not_promoted_psych_std': not_promoted['psychological_score'].std() if 'psychological_score' in not_promoted.columns else 0,
+                        
+                        # Correlations
+                        'corr_performance': df[['performance_score', 'has_promotion']].corr().iloc[0, 1] if 'performance_score' in df.columns else 0,
+                        'corr_behavioral': df[['behavior_avg', 'has_promotion']].corr().iloc[0, 1] if 'behavior_avg' in df.columns else 0,
+                        'corr_psychological': df[['psychological_score', 'has_promotion']].corr().iloc[0, 1] if 'psychological_score' in df.columns else 0,
+                    }
+                    
+                    # Get AI analysis
+                    analysis = analysis_service.analyze_eda_results(stats)
+                    
+                    # Display analysis
+                    st.markdown(analysis)
+                    
+                    st.success("✅ Analisis EDA selesai!")
+                    
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+                st.info("Menggunakan analisis fallback...")
+                
+                # Show fallback analysis
+                promoted = df[df['has_promotion'] == 1]
+                not_promoted = df[df['has_promotion'] == 0]
+                
+                stats = {
+                    'promoted_pct': (len(promoted) / len(df) * 100),
+                    'not_promoted_pct': (len(not_promoted) / len(df) * 100),
+                    'imbalance_ratio': len(not_promoted) / len(promoted) if len(promoted) > 0 else 0,
+                    'promoted_perf_mean': promoted['performance_score'].mean() if 'performance_score' in promoted.columns else 0,
+                    'promoted_perf_std': promoted['performance_score'].std() if 'performance_score' in promoted.columns else 0,
+                    'not_promoted_perf_mean': not_promoted['performance_score'].mean() if 'performance_score' in not_promoted.columns else 0,
+                    'not_promoted_perf_std': not_promoted['performance_score'].std() if 'performance_score' in not_promoted.columns else 0,
+                    'promoted_behav_mean': promoted['behavior_avg'].mean() if 'behavior_avg' in promoted.columns else 0,
+                    'promoted_behav_std': promoted['behavior_avg'].std() if 'behavior_avg' in promoted.columns else 0,
+                    'not_promoted_behav_mean': not_promoted['behavior_avg'].mean() if 'behavior_avg' in not_promoted.columns else 0,
+                    'not_promoted_behav_std': not_promoted['behavior_avg'].std() if 'behavior_avg' in not_promoted.columns else 0,
+                    'promoted_psych_mean': promoted['psychological_score'].mean() if 'psychological_score' in promoted.columns else 0,
+                    'promoted_psych_std': promoted['psychological_score'].std() if 'psychological_score' in promoted.columns else 0,
+                    'not_promoted_psych_mean': not_promoted['psychological_score'].mean() if 'psychological_score' in not_promoted.columns else 0,
+                    'not_promoted_psych_std': not_promoted['psychological_score'].std() if 'psychological_score' in not_promoted.columns else 0,
+                    'corr_performance': df[['performance_score', 'has_promotion']].corr().iloc[0, 1] if 'performance_score' in df.columns else 0,
+                    'corr_behavioral': df[['behavior_avg', 'has_promotion']].corr().iloc[0, 1] if 'behavior_avg' in df.columns else 0,
+                    'corr_psychological': df[['psychological_score', 'has_promotion']].corr().iloc[0, 1] if 'psychological_score' in df.columns else 0,
+                }
+                
+                from services.page_analysis_service import PageAnalysisService
+                fallback_service = PageAnalysisService()
+                fallback_analysis = fallback_service._fallback_eda_analysis(stats)
+                st.markdown(fallback_analysis)
