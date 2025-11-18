@@ -16,8 +16,30 @@ class PageAnalysisService:
     
     def __init__(self):
         """Initialize Gemini AI service."""
+        # Load environment variables explicitly
+        from dotenv import load_dotenv
+        from pathlib import Path
+        
+        # Try to load .env from project root
+        env_path = Path(__file__).resolve().parents[2] / '.env'
+        if env_path.exists():
+            load_dotenv(dotenv_path=env_path, override=True)
+            print(f"✅ Loaded .env from {env_path}")
+        
+        # Also try Streamlit secrets
+        try:
+            import streamlit as st
+            if hasattr(st, 'secrets') and 'GEMINI_API_KEY' in st.secrets:
+                os.environ['GEMINI_API_KEY'] = str(st.secrets['GEMINI_API_KEY'])
+                print("✅ Loaded GEMINI_API_KEY from Streamlit secrets")
+        except:
+            pass
+        
         self.api_key = os.getenv('GEMINI_API_KEY')
         self.enabled = False
+        
+        print(f"🔍 API Key check: {'Found' if self.api_key else 'Not found'}")
+        print(f"🔍 API Key length: {len(self.api_key) if self.api_key else 0}")
         
         if self.api_key and self.api_key != 'your_gemini_api_key_here':
             try:
@@ -25,9 +47,12 @@ class PageAnalysisService:
                 genai.configure(api_key=self.api_key)
                 self.model = genai.GenerativeModel('gemini-pro')
                 self.enabled = True
+                print("✅ Gemini AI initialized successfully")
             except Exception as e:
                 print(f"⚠️ Failed to initialize Gemini: {e}")
                 self.enabled = False
+        else:
+            print("⚠️ GEMINI_API_KEY not found or invalid")
     
     def is_enabled(self) -> bool:
         """Check if AI analysis is enabled."""
@@ -47,7 +72,7 @@ class PageAnalysisService:
         if not self.enabled:
             return self._fallback_data_explorer_analysis(stats)
         
-        prompt = f"""Sebagai HR Analytics Expert, analisis dataset karyawan berikut:
+        prompt = f"""Sebagai HR Analytics Expert, analisis dataset karyawan berikut BERDASARKAN DATA YANG DIBERIKAN SAJA. JANGAN menambahkan informasi yang tidak ada dalam data.
 
 **Dataset Overview:**
 - Total Karyawan: {stats.get('total_rows', 0):,}
@@ -65,19 +90,25 @@ class PageAnalysisService:
 - Coverage: {stats.get('qa_coverage', 0):.1f}%
 - Karyawan dengan QA: {stats.get('qa_count', 0)}
 
+PENTING: 
+1. HANYA gunakan angka yang diberikan di atas
+2. JANGAN membuat asumsi atau menambahkan data yang tidak ada
+3. Fokus pada interpretasi angka yang ada
+4. Gunakan perbandingan relatif (tinggi/rendah) berdasarkan konteks HR
+
 Berikan analisis dalam format berikut:
 
 ## 📊 Ringkasan Dataset
-[Ringkasan singkat tentang karakteristik dataset]
+[Ringkasan berdasarkan angka di atas]
 
 ## 🎯 Temuan Utama
-- [3-4 insight penting dari data]
+- [2-3 insight berdasarkan angka aktual]
 
 ## ⚠️ Perhatian Khusus
-- [Area yang perlu diperhatikan]
+- [Area yang perlu diperhatikan berdasarkan data]
 
 ## 💡 Rekomendasi
-- [2-3 rekomendasi untuk HR]
+- [2-3 rekomendasi praktis untuk HR]
 
 Gunakan bahasa Indonesia yang profesional dan mudah dipahami."""
 
@@ -101,7 +132,7 @@ Gunakan bahasa Indonesia yang profesional dan mudah dipahami."""
         if not self.enabled:
             return self._fallback_eda_analysis(stats)
         
-        prompt = f"""Sebagai Data Scientist, analisis hasil Exploratory Data Analysis (EDA) berikut:
+        prompt = f"""Sebagai Data Scientist, analisis hasil Exploratory Data Analysis (EDA) berikut BERDASARKAN ANGKA YANG DIBERIKAN SAJA.
 
 **Distribusi Promosi:**
 - Promoted: {stats.get('promoted_pct', 0):.1f}%
@@ -113,36 +144,45 @@ Gunakan bahasa Indonesia yang profesional dan mudah dipahami."""
 Performance Scores:
 - Promoted: {stats.get('promoted_perf_mean', 0):.2f} (±{stats.get('promoted_perf_std', 0):.2f})
 - Not Promoted: {stats.get('not_promoted_perf_mean', 0):.2f} (±{stats.get('not_promoted_perf_std', 0):.2f})
+- Selisih: {stats.get('promoted_perf_mean', 0) - stats.get('not_promoted_perf_mean', 0):.2f} poin
 
 Behavioral Scores:
 - Promoted: {stats.get('promoted_behav_mean', 0):.2f} (±{stats.get('promoted_behav_std', 0):.2f})
 - Not Promoted: {stats.get('not_promoted_behav_mean', 0):.2f} (±{stats.get('not_promoted_behav_std', 0):.2f})
+- Selisih: {stats.get('promoted_behav_mean', 0) - stats.get('not_promoted_behav_mean', 0):.2f} poin
 
 Psychological Scores (QA):
 - Promoted: {stats.get('promoted_psych_mean', 0):.2f} (±{stats.get('promoted_psych_std', 0):.2f})
 - Not Promoted: {stats.get('not_promoted_psych_mean', 0):.2f} (±{stats.get('not_promoted_psych_std', 0):.2f})
+- Selisih: {stats.get('promoted_psych_mean', 0) - stats.get('not_promoted_psych_mean', 0):.2f} poin
 
 **Korelasi dengan Promosi:**
 - Performance Score: {stats.get('corr_performance', 0):.3f}
 - Behavioral Score: {stats.get('corr_behavioral', 0):.3f}
 - Psychological Score: {stats.get('corr_psychological', 0):.3f}
 
+PENTING:
+1. HANYA gunakan angka yang tertera di atas
+2. JANGAN menambahkan statistik atau angka lain
+3. Interpretasi harus berdasarkan data aktual
+4. Sebutkan angka spesifik dalam analisis
+
 Berikan analisis dalam format:
 
 ## 📈 Analisis Distribusi
-[Interpretasi distribusi dan imbalance]
+[Interpretasi distribusi {stats.get('promoted_pct', 0):.1f}% vs {stats.get('not_promoted_pct', 0):.1f}% dan imbalance ratio {stats.get('imbalance_ratio', 0):.1f}:1]
 
 ## 🔍 Perbedaan Kelompok
-[Analisis perbedaan antara promoted dan not promoted]
+[Analisis selisih Performance ({stats.get('promoted_perf_mean', 0) - stats.get('not_promoted_perf_mean', 0):.2f} poin), Behavioral ({stats.get('promoted_behav_mean', 0) - stats.get('not_promoted_behav_mean', 0):.2f} poin), dan Psychological ({stats.get('promoted_psych_mean', 0) - stats.get('not_promoted_psych_mean', 0):.2f} poin)]
 
 ## 🔗 Analisis Korelasi
-[Interpretasi korelasi dan feature importance]
+[Interpretasi korelasi Performance ({stats.get('corr_performance', 0):.3f}), Behavioral ({stats.get('corr_behavioral', 0):.3f}), Psychological ({stats.get('corr_psychological', 0):.3f})]
 
 ## 🎯 Insight Statistik
-- [3-4 temuan statistik penting]
+- [2-3 temuan berdasarkan angka di atas]
 
 ## 💡 Implikasi untuk Model
-- [Rekomendasi untuk modeling]
+- [Rekomendasi berdasarkan distribusi dan korelasi]
 
 Gunakan bahasa Indonesia yang profesional."""
 
@@ -169,14 +209,14 @@ Gunakan bahasa Indonesia yang profesional."""
         # Get best model
         best_model = model_results.get('best_model', {})
         
-        prompt = f"""Sebagai Machine Learning Expert, analisis performa model berikut:
+        prompt = f"""Sebagai Machine Learning Expert, analisis performa model berikut BERDASARKAN METRICS YANG DIBERIKAN SAJA.
 
 **Model Terbaik: {best_model.get('name', 'Unknown')}**
 
 Metrics:
 - Accuracy: {best_model.get('accuracy', 0):.4f} ({best_model.get('accuracy', 0)*100:.2f}%)
-- Precision: {best_model.get('precision', 0):.4f}
-- Recall: {best_model.get('recall', 0):.4f}
+- Precision: {best_model.get('precision', 0):.4f} ({best_model.get('precision', 0)*100:.2f}%)
+- Recall: {best_model.get('recall', 0):.4f} ({best_model.get('recall', 0)*100:.2f}%)
 - F1-Score: {best_model.get('f1_score', 0):.4f}
 - ROC-AUC: {best_model.get('roc_auc', 0):.4f}
 
@@ -190,28 +230,39 @@ Metrics:
 - QA Features dalam Top 10: {model_results.get('qa_in_top10', 0)}
 - Total Kontribusi QA: {model_results.get('qa_contribution', 0):.1f}%
 
+PENTING:
+1. HANYA gunakan angka metrics yang tertera di atas
+2. JANGAN menambahkan angka atau statistik lain
+3. Sebutkan angka spesifik dalam analisis (contoh: "accuracy 87.5%")
+4. Interpretasi harus akurat dan tidak berlebihan
+
 Berikan analisis dalam format:
 
 ## 🏆 Performa Model Terbaik
-[Evaluasi performa model terbaik]
+[Evaluasi {best_model.get('name', 'Unknown')} dengan accuracy {best_model.get('accuracy', 0)*100:.2f}%, precision {best_model.get('precision', 0)*100:.2f}%, recall {best_model.get('recall', 0)*100:.2f}%]
 
 ## 📊 Analisis Metrics
-[Interpretasi accuracy, precision, recall, F1, ROC-AUC]
+[Interpretasi setiap metric berdasarkan angka di atas:
+- Accuracy {best_model.get('accuracy', 0)*100:.2f}%: [interpretasi]
+- Precision {best_model.get('precision', 0)*100:.2f}%: [interpretasi]
+- Recall {best_model.get('recall', 0)*100:.2f}%: [interpretasi]
+- F1-Score {best_model.get('f1_score', 0):.4f}: [interpretasi]
+- ROC-AUC {best_model.get('roc_auc', 0):.4f}: [interpretasi]]
 
 ## 🔍 Perbandingan Model
-[Analisis perbandingan antar model]
+[Analisis perbandingan berdasarkan list di atas]
 
 ## 🎯 Feature Importance
-[Interpretasi fitur-fitur penting]
+[Interpretasi top 5 features berdasarkan importance values]
 
 ## 🧠 Kontribusi Quick Assessment
-[Analisis dampak QA features]
+[Analisis {model_results.get('qa_contribution', 0):.1f}% kontribusi QA]
 
 ## ⚠️ Limitasi & Perhatian
-- [Potensi limitasi model]
+- [Potensi limitasi berdasarkan metrics]
 
 ## 💡 Rekomendasi
-- [Saran untuk improvement]
+- [Saran praktis untuk improvement]
 
 Gunakan bahasa Indonesia yang profesional."""
 
