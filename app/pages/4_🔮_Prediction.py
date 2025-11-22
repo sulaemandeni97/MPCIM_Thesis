@@ -353,7 +353,19 @@ if prediction_ready:
 
     st.markdown("---")
     st.markdown("## 🎯 Prediction Results")
-    col1, col2, col3 = st.columns(3)
+    
+    # Threshold information
+    OPTIMAL_THRESHOLD = 0.70
+    st.info(f"""
+    **📊 Optimized Threshold: {OPTIMAL_THRESHOLD:.0%}**
+    
+    Model menggunakan threshold **{OPTIMAL_THRESHOLD:.0%}** (bukan 50%) untuk mengurangi **False Positives** (prediksi promosi yang salah).
+    - ✅ Precision meningkat **+6.91%** (dari 36.84% → 43.75%)
+    - ✅ False Positives berkurang **25%** (dari 12 → 9 kasus)
+    - 💡 Prediksi lebih konservatif dan akurat
+    """)
+    
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric("Prediction", "✅ PROMOTED" if prediction == 1 else "❌ NOT PROMOTED")
@@ -362,8 +374,43 @@ if prediction_ready:
         st.metric("Probability", f"{probability:.2%}")
 
     with col3:
-        confidence = "High" if abs(probability - 0.5) > 0.3 else "Medium" if abs(probability - 0.5) > 0.15 else "Low"
-        st.metric("Confidence", confidence)
+        # Confidence based on distance from threshold
+        distance_from_threshold = abs(probability - OPTIMAL_THRESHOLD)
+        if distance_from_threshold > 0.20:
+            confidence = "High"
+            confidence_color = "🟢"
+        elif distance_from_threshold > 0.10:
+            confidence = "Medium"
+            confidence_color = "🟡"
+        else:
+            confidence = "Low"
+            confidence_color = "🔴"
+        st.metric("Confidence", f"{confidence_color} {confidence}")
+    
+    with col4:
+        # Distance from threshold
+        st.metric("Threshold Gap", f"{distance_from_threshold:.1%}", 
+                 help=f"Jarak dari threshold {OPTIMAL_THRESHOLD:.0%}")
+    
+    # Warning if probability is close to threshold
+    if distance_from_threshold < 0.10:
+        st.warning(f"""
+        ⚠️ **Borderline Case** - Probability ({probability:.1%}) sangat dekat dengan threshold ({OPTIMAL_THRESHOLD:.0%})
+        
+        **Rekomendasi:**
+        - Review manual oleh HR diperlukan
+        - Pertimbangkan faktor kualitatif lainnya
+        - Monitor performa karyawan lebih ketat
+        """)
+    elif prediction == 1 and probability < 0.80:
+        st.info(f"""
+        💡 **Moderate Confidence** - Probability {probability:.1%} di atas threshold tapi belum sangat tinggi
+        
+        **Rekomendasi:**
+        - Kandidat potensial tapi perlu evaluasi tambahan
+        - Pertimbangkan program development sebelum promosi
+        - Monitor progress secara berkala
+        """)
 
     st.markdown("### 📊 Promotion Probability")
     fig = go.Figure(go.Indicator(
@@ -371,7 +418,7 @@ if prediction_ready:
         value=probability * 100,
         domain={'x': [0, 1], 'y': [0, 1]},
         title={'text': "Promotion Probability (%)", 'font': {'size': 24}},
-        delta={'reference': 50, 'increasing': {'color': "green"}},
+        delta={'reference': 70, 'increasing': {'color': "green"}},
         gauge={
             'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
             'bar': {'color': "darkblue"},
@@ -379,11 +426,15 @@ if prediction_ready:
             'borderwidth': 2,
             'bordercolor': "gray",
             'steps': [
-                {'range': [0, 30], 'color': '#ffcccc'},
-                {'range': [30, 70], 'color': '#ffffcc'},
-                {'range': [70, 100], 'color': '#ccffcc'}
+                {'range': [0, 50], 'color': '#ffcccc'},  # Low probability
+                {'range': [50, 70], 'color': '#ffffcc'},  # Medium (below threshold)
+                {'range': [70, 100], 'color': '#ccffcc'}  # High (above threshold)
             ],
-            'threshold': {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': 50}
+            'threshold': {
+                'line': {'color': "red", 'width': 4}, 
+                'thickness': 0.75, 
+                'value': 70  # Updated to optimal threshold
+            }
         }
     ))
     fig.update_layout(height=400)

@@ -22,7 +22,7 @@ apply_styles()
 st.markdown("""
 <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
             padding: 25px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 2.2em;">🤖 Model Performance</h1>
+    <h1 style="color: white; margin: 0; font-size: 2.2em;">Model Performance</h1>
     <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 1.1em;">
         Analisis Performa Model Machine Learning
     </p>

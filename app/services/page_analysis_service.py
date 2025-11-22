@@ -45,11 +45,44 @@ class PageAnalysisService:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel('gemini-pro')
+                
+                # Use latest stable Gemini model
+                self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                
+                # Safety settings - permissive for business analytics
+                self.safety_settings = [
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_NONE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                        "threshold": "BLOCK_NONE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "threshold": "BLOCK_NONE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "threshold": "BLOCK_NONE"
+                    },
+                ]
+                
+                # Generation config
+                self.generation_config = {
+                    'temperature': 0.7,
+                    'top_p': 0.95,
+                    'top_k': 40,
+                    'max_output_tokens': 2048,
+                }
+                
                 self.enabled = True
-                print("✅ Gemini AI initialized successfully")
+                print("✅ Gemini AI initialized successfully with gemini-2.0-flash-exp")
             except Exception as e:
                 print(f"⚠️ Failed to initialize Gemini: {e}")
+                import traceback
+                traceback.print_exc()
                 self.enabled = False
         else:
             print("⚠️ GEMINI_API_KEY not found or invalid")
@@ -113,10 +146,22 @@ Berikan analisis dalam format berikut:
 Gunakan bahasa Indonesia yang profesional dan mudah dipahami."""
 
         try:
-            response = self.model.generate_content(prompt)
-            return response.text
+            response = self.model.generate_content(
+                prompt,
+                generation_config=self.generation_config,
+                safety_settings=self.safety_settings
+            )
+            
+            # Try to get response text safely
+            if response and hasattr(response, 'text'):
+                return response.text
+            else:
+                print("⚠️ Gemini response blocked or empty")
+                return self._fallback_data_explorer_analysis(stats)
         except Exception as e:
             print(f"⚠️ Gemini analysis error: {e}")
+            import traceback
+            traceback.print_exc()
             return self._fallback_data_explorer_analysis(stats)
     
     def analyze_eda_results(self, stats: Dict[str, Any]) -> str:
@@ -187,10 +232,22 @@ Berikan analisis dalam format:
 Gunakan bahasa Indonesia yang profesional."""
 
         try:
-            response = self.model.generate_content(prompt)
-            return response.text
+            response = self.model.generate_content(
+                prompt,
+                generation_config=self.generation_config,
+                safety_settings=self.safety_settings
+            )
+            
+            # Try to get response text safely
+            if response and hasattr(response, 'text'):
+                return response.text
+            else:
+                print("⚠️ Gemini response blocked or empty")
+                return self._fallback_eda_analysis(stats)
         except Exception as e:
             print(f"⚠️ Gemini analysis error: {e}")
+            import traceback
+            traceback.print_exc()
             return self._fallback_eda_analysis(stats)
     
     def analyze_model_performance(self, model_results: Dict[str, Any]) -> str:
@@ -267,10 +324,22 @@ Berikan analisis dalam format:
 Gunakan bahasa Indonesia yang profesional."""
 
         try:
-            response = self.model.generate_content(prompt)
-            return response.text
+            response = self.model.generate_content(
+                prompt,
+                generation_config=self.generation_config,
+                safety_settings=self.safety_settings
+            )
+            
+            # Try to get response text safely
+            if response and hasattr(response, 'text'):
+                return response.text
+            else:
+                print("⚠️ Gemini response blocked or empty")
+                return self._fallback_model_analysis(model_results)
         except Exception as e:
             print(f"⚠️ Gemini analysis error: {e}")
+            import traceback
+            traceback.print_exc()
             return self._fallback_model_analysis(model_results)
     
     def _format_model_comparison(self, models: list) -> str:

@@ -152,6 +152,7 @@ dependencies:
   - seaborn=0.13.2=hd8ed1ab_3
   - seaborn-base=0.13.2=pyhd8ed1ab_3
   - setuptools=80.9.0=pyhff2d567_0
+  - shap
   - six=1.17.0=pyhe01879c_1
   - smmap=5.0.2=pyhd8ed1ab_0
   - snappy=1.2.2=hada39a4_1

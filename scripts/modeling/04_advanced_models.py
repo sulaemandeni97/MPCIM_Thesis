@@ -25,6 +25,7 @@ from sklearn.metrics import (
     roc_curve, precision_recall_curve
 )
 import warnings
+import shap
 warnings.filterwarnings('ignore')
 
 # Set style
@@ -455,6 +456,42 @@ plt.tight_layout()
 plt.savefig(f'{output_dir}/04_feature_importance.png', dpi=300, bbox_inches='tight')
 print('✅ Plot saved: 04_feature_importance.png')
 plt.close()
+
+
+# ============================================================================
+# 10.5. SHAP ANALYSIS (XGBOOST)
+# ============================================================================
+
+print()
+print('10.5. SHAP ANALYSIS FOR XGBOOST')
+print('-'*80)
+
+# Create the explainer
+explainer = shap.TreeExplainer(xgb_model)
+
+# Calculate SHAP values for the test set
+shap_values = explainer.shap_values(X_test)
+
+print('✅ SHAP values calculated')
+
+# Generate SHAP summary plot (beeswarm)
+plt.figure(figsize=(12, 8))
+shap.summary_plot(shap_values, X_test, plot_type="dot", show=False)
+plt.title('SHAP Summary Plot - XGBoost', fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{output_dir}/05_shap_summary_plot.png', dpi=300, bbox_inches='tight')
+print('✅ Plot saved: 05_shap_summary_plot.png')
+plt.close()
+
+# Generate SHAP feature importance plot (bar plot)
+plt.figure(figsize=(12, 8))
+shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
+plt.title('SHAP Global Feature Importance - XGBoost', fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{output_dir}/06_shap_bar_plot.png', dpi=300, bbox_inches='tight')
+print('✅ Plot saved: 06_shap_bar_plot.png')
+plt.close()
+
 
 # ============================================================================
 # 11. SAVE MODELS AND RESULTS

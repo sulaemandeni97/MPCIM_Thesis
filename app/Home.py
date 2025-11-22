@@ -36,6 +36,50 @@ st.set_page_config(
 # Apply global styles
 apply_styles()
 
+# Paths and dataset loader helpers
+repo_root = Path(__file__).resolve().parents[1]
+default_data_qa = repo_root / "data" / "final" / "integrated_full_dataset.csv"
+default_data = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
+data_url = os.environ.get("DATA_URL")
+
+# Helper to load whichever dataset is active (Data Explorer session > integrated_full > integrated_performance)
+def get_current_dataset():
+    df = None
+    has_qa_data = False
+    data_load_error = None
+    source = None
+
+    try:
+        if 'mpcim_df' in st.session_state and st.session_state['mpcim_df'] is not None:
+            df = st.session_state['mpcim_df']
+            source = "Data Explorer"
+        elif default_data_qa.exists():
+            df = load_csv_from_path(default_data_qa)
+            source = "integrated_full_dataset.csv"
+        elif default_data.exists():
+            df = load_csv_from_path(default_data)
+            source = "integrated_performance_behavioral.csv"
+        elif data_url:
+            with urllib.request.urlopen(data_url) as resp:
+                raw = resp.read()
+            df = load_csv_from_path(io.BytesIO(raw))
+            source = "DATA_URL"
+        else:
+            data_load_error = (
+                "Data tidak ditemukan. Tambahkan file CSV di: 'data/final/integrated_full_dataset.csv' "
+                "atau set environment variable DATA_URL ke URL file CSV."
+            )
+
+        if df is not None:
+            has_qa_data = 'has_quick_assessment' in df.columns
+    except Exception as e:
+        data_load_error = f"Gagal memuat data: {e}"
+
+    return df, has_qa_data, data_load_error, source
+
+# Load dataset once for reuse across sections
+df, has_qa_data, data_load_error, data_source = get_current_dataset()
+
 # Enhanced Title with gradient
 st.markdown("""
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -153,19 +197,27 @@ with col1:
     """, unsafe_allow_html=True)
     
     # Methodology
+    if df is not None:
+        total_employees_text = f"{len(df):,} employee records"
+        qa_records = df['has_quick_assessment'].sum() if 'has_quick_assessment' in df.columns else None
+        qa_text = f" + {int(qa_records):,} Quick Assessment records" if qa_records is not None else ""
+        data_bullet = f"<li><strong>Data</strong>: {total_employees_text}{qa_text}</li>"
+    else:
+        data_bullet = "<li><strong>Data</strong>: (data belum dimuat)</li>"
+
     st.markdown("""
     <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; 
                 border-left: 4px solid #2196F3;">
         <h4 style="color: #1565c0; margin-top: 0;">🔬 Metodologi</h4>
         <ul style="margin-bottom: 0;">
-            <li><strong>Data</strong>: 712 employee records + 826 Quick Assessment records</li>
+            {data_bullet}
             <li><strong>Features</strong>: 23 features (14 traditional + 9 psychological)</li>
             <li><strong>Models</strong>: Logistic Regression, Random Forest, XGBoost, Neural Networks</li>
             <li><strong>Evaluation</strong>: Accuracy, Precision, Recall, F1-Score, ROC-AUC</li>
             <li><strong>Validation</strong>: Stratified cross-validation + SMOTE balancing</li>
         </ul>
     </div>
-    """, unsafe_allow_html=True)
+    """.format(data_bullet=data_bullet), unsafe_allow_html=True)
 
 with col2:
     st.markdown("""
@@ -174,43 +226,12 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
     
-    # Robust data loading: prefer repository relative path, else DATA_URL env var
-    repo_root = Path(__file__).resolve().parents[1]
-    # Try to load integrated_full_dataset first (with QA), fallback to old dataset
-    default_data_qa = repo_root / "data" / "final" / "integrated_full_dataset.csv"
-    default_data = repo_root / "data" / "final" / "integrated_performance_behavioral.csv"
-    data_url = os.environ.get("DATA_URL")  # allow deploy to point to an external CSV
-
-    df = None
-    has_qa_data = False
-    data_load_error = None
-
-    try:
-        # Check if Data Explorer has loaded data (shared state)
-        if 'mpcim_df' in st.session_state and st.session_state['mpcim_df'] is not None:
-            df = st.session_state['mpcim_df']
-            has_qa_data = 'has_quick_assessment' in df.columns
-            st.info("📊 Menggunakan dataset dari Data Explorer")
-        elif default_data_qa.exists():
-            df = load_csv_from_path(default_data_qa)
-            has_qa_data = True
-        elif default_data.exists():
-            df = load_csv_from_path(default_data)
-        elif data_url:
-            st.info("Mengunduh data dari DATA_URL environment variable...")
-            # stream download into BytesIO to avoid writing to disk
-            with urllib.request.urlopen(data_url) as resp:
-                raw = resp.read()
-            df = load_csv_from_path(io.BytesIO(raw))
-        else:
-            data_load_error = (
-                "Data tidak ditemukan. Tambahkan file CSV di: 'data/final/integrated_full_dataset.csv' "
-                "atau set environment variable DATA_URL ke URL file CSV."
-            )
-    except Exception as e:
-        data_load_error = f"Gagal memuat data: {e}"
-
     if df is not None:
+        if data_source == "Data Explorer":
+            st.info("📊 Menggunakan dataset dari Data Explorer")
+        elif data_source:
+            st.info(f"📁 Menggunakan dataset default: {data_source}")
+
         st.metric("Total Employees", f"{len(df):,}")
         if 'has_promotion' in df.columns:
             st.metric("Promotion Rate", f"{df['has_promotion'].mean()*100:.2f}%")
@@ -268,13 +289,13 @@ with col2:
                         label="Download EDA Summary",
                         data=f,
                         file_name="EDA_Summary_Report.txt",
-                        mime="text/plain"
-                    )
+                    mime="text/plain"
+                )
             else:
                 st.info("Tidak ditemukan EDA_Summary_Report.txt di folder results/. Jalankan skrip EDA untuk membuatnya.")
 
     else:
-        st.warning(f"⚠️ {data_load_error}")
+        st.warning(f"⚠️ {data_load_error or 'Data tidak ditemukan.'}")
 
 # Key Features
 st.markdown("---")

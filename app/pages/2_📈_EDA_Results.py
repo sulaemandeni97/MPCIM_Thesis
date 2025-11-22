@@ -22,7 +22,7 @@ apply_styles()
 st.markdown("""
 <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
             padding: 25px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 2.2em;">📈 EDA Results</h1>
+    <h1 style="color: white; margin: 0; font-size: 2.2em;">EDA Results</h1>
     <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 1.1em;">
         Exploratory Data Analysis - Hasil Analisis Data
     </p>

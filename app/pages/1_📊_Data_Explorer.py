@@ -25,7 +25,7 @@ apply_styles()
 st.markdown("""
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             padding: 25px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 2.2em;">📊 Data Explorer</h1>
+    <h1 style="color: white; margin: 0; font-size: 2.2em;">Data Explorer</h1>
     <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 1.1em;">
         Eksplorasi dan Analisis Dataset MPCIM
     </p>
@@ -152,21 +152,57 @@ def load_data(uploaded_file=None):
     return None
 
 
+@st.cache_data(ttl=60 * 60)
+def get_dataset_stats(path: Path):
+    """Return simple stats for a dataset path (rows and promotion rate)."""
+    try:
+        df = pd.read_csv(path)
+    except FileNotFoundError:
+        return None
+    except Exception:
+        return None
+
+    promo_rate = df['has_promotion'].mean() if 'has_promotion' in df.columns else None
+    return {
+        "rows": len(df),
+        "promo_rate": promo_rate
+    }
+
+
 data_state = st.session_state.setdefault('data_explorer_state', {})
+
+def reset_to_default():
+    """Clear uploaded dataset state and revert to default sample."""
+    data_state.clear()
+    for k in ["mpcim_df", "data_explorer_upload"]:
+        if k in st.session_state:
+            del st.session_state[k]
+    st.rerun()
 
 # Dataset info section
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📊 Dataset Options")
 
+repo_root = Path(__file__).resolve().parents[2]
+stats_balanced = get_dataset_stats(repo_root / "data" / "final" / "sample_dataset_100_balanced.csv")
+stats_sample = get_dataset_stats(repo_root / "data" / "final" / "sample_dataset_100.csv")
+stats_integrated = get_dataset_stats(repo_root / "data" / "final" / "integrated_full_dataset.csv")
+
+def fmt_rows(stats):
+    return f"{stats['rows']:,}" if stats and stats.get("rows") is not None else "?"
+
+def fmt_promo(stats):
+    return f"{stats['promo_rate']*100:.1f}%" if stats and stats.get("promo_rate") is not None else "?"
+
 with st.sidebar.expander("ℹ️ Available Datasets", expanded=False):
-    st.markdown("""
+    st.markdown(f"""
     **Sample Datasets:**
     - `sample_dataset_100_balanced.csv` ⭐ **DEFAULT**
-      - 100 rows (70% promoted, 30% not)
+      - {fmt_rows(stats_balanced)} rows ({fmt_promo(stats_balanced)} promoted)
       - QA scores in 0-100 range
       - Perfect for demos!
-    - `sample_dataset_100.csv` (100 rows, 10% promoted)
-    - `integrated_full_dataset.csv` (712 rows, 9.3% promoted)
+    - `sample_dataset_100.csv` ({fmt_rows(stats_sample)} rows, {fmt_promo(stats_sample)} promoted)
+    - `integrated_full_dataset.csv` ({fmt_rows(stats_integrated)} rows, {fmt_promo(stats_integrated)} promoted)
     
     **Template:**
     - `UPLOAD_TEMPLATE.csv` (structure reference)
@@ -186,10 +222,11 @@ uploaded = st.sidebar.file_uploader("Upload CSV dataset (optional)", type=["csv"
 if data_state.get("source") == "uploaded":
     st.sidebar.success(f"📂 Menggunakan data upload: {data_state.get('uploaded_name', 'custom_upload')}")
     if st.sidebar.button("Reset ke data default", key="reset_uploaded_dataset"):
-        data_state.clear()
-        st.experimental_rerun()
+        reset_to_default()
 else:
-    st.sidebar.info("📂 Menggunakan data default: sample_dataset_100_balanced.csv (70% promoted)")
+    st.sidebar.info(f"📂 Menggunakan data default: sample_dataset_100_balanced.csv ({fmt_promo(stats_balanced)} promoted)")
+    if st.sidebar.button("Reset data & cache", key="reset_default_dataset"):
+        reset_to_default()
 
 df = None
 
